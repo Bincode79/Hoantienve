@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (Auth UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - sdt: string (required)
+    //   - displayName: string
+    //   - role: string (required, enum: admin, user)
+    //   - status: string (enum: active, inactive)
+    //   - createdAt: timestamp
+    //
+    // Collection: refundRequests
+    // Document ID: requestId (Auto-generated)
+    // Fields:
+    //   - userId: string (required)
+    //   - userSdt: string
+    //   - bankName: string (required)
+    //   - accountNumber: string (required)
+    //   - accountHolder: string (required)
+    //   - amount: number (required, positive)
+    //   - orderCode: string (required)
+    //   - status: string (required, enum: pending, approved, rejected)
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //   - adminNote: string
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "jacksaybin@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'sdt', 'role']) &&
+             data.uid is string &&
+             data.sdt is string &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidRefundRequest(data) {
+      return data.keys().hasAll(['userId', 'bankName', 'accountNumber', 'accountHolder', 'amount', 'orderCode', 'status']) &&
+             data.userId is string &&
+             data.bankName is string && data.bankName.size() > 0 && data.bankName.size() < 100 &&
+             data.accountNumber is string && data.accountNumber.size() > 0 && data.accountNumber.size() < 50 &&
+             data.accountHolder is string && data.accountHolder.size() > 0 && data.accountHolder.size() < 100 &&
+             data.amount is number && data.amount > 0 &&
+             data.orderCode is string && data.orderCode.size() > 0 && data.orderCode.size() < 50 &&
+             data.status in ['pending', 'approved', 'rejected'] &&
+             (!('adminNote' in data) || (data.adminNote is string && data.adminNote.size() < 500));
+    }
+
+    // Rules for users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin()
+      );
+    }
+
+    // Rules for refundRequests collection
+    match /refundRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidRefundRequest(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        (isAdmin() && isValidRefundRequest(request.resource.data)) ||
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending' && request.resource.data.status == 'pending' && isValidRefundRequest(request.resource.data))
+      );
+      allow delete: if isAdmin();
+    }
+    // Rules for basedata collection
+    match /basedata/{orderId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}
