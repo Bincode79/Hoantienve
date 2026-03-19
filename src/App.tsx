@@ -412,8 +412,13 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'requests' | 'settings' | 'audit' | 'chat' | 'bookings'>('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   // Giao diện hiện tại chỉ hỗ trợ chế độ sáng (Light mode)
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+  };
 
 
   // Các trạng thái Chat
@@ -1042,10 +1047,18 @@ export default function App() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
     >
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Thanh điều hướng bên (Sidebar) */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 text-black transition-all duration-200 shadow-2xl lg:shadow-none lg:relative lg:translate-x-0 flex flex-col",
+          "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 text-black transition-transform duration-300 shadow-2xl lg:shadow-none lg:relative lg:translate-x-0 flex flex-col",
           !isSidebarOpen && "-translate-x-full"
         )}
       >
@@ -1062,7 +1075,7 @@ export default function App() {
               icon={<LayoutDashboard size={20} />}
               label="Tổng quan"
               active={activeTab === 'dashboard'}
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => handleTabChange('dashboard')}
             />
             {profile?.role === 'admin' && (
               <>
@@ -1070,25 +1083,25 @@ export default function App() {
                   icon={<Users size={20} />}
                   label="Quản lý User"
                   active={activeTab === 'users'}
-                  onClick={() => setActiveTab('users')}
+                  onClick={() => handleTabChange('users')}
                 />
                 <SidebarItem
                   icon={<Ticket size={20} />}
                   label="Yêu cầu hoàn vé"
                   active={activeTab === 'requests'}
-                  onClick={() => setActiveTab('requests')}
+                  onClick={() => handleTabChange('requests')}
                 />
                 <SidebarItem
                   icon={<ShieldCheck size={20} />}
                   label="Nhật ký Admin"
                   active={activeTab === 'audit'}
-                  onClick={() => setActiveTab('audit')}
+                  onClick={() => handleTabChange('audit')}
                 />
                 <SidebarItem
                   icon={<TicketCheck size={20} />}
                   label="Mã đặt chỗ"
                   active={activeTab === 'bookings'}
-                  onClick={() => setActiveTab('bookings')}
+                  onClick={() => handleTabChange('bookings')}
                 />
               </>
             )}
@@ -1097,14 +1110,14 @@ export default function App() {
                 icon={<Ticket size={20} />}
                 label="Hoàn tiền"
                 active={activeTab === 'requests'}
-                onClick={() => setActiveTab('requests')}
+                onClick={() => handleTabChange('requests')}
               />
             )}
             <SidebarItem
               icon={<Settings size={20} />}
               label="Cài đặt tài khoản"
               active={activeTab === 'settings'}
-              onClick={() => setActiveTab('settings')}
+              onClick={() => handleTabChange('settings')}
             />
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
@@ -1477,7 +1490,7 @@ function UserDashboard({ requests, profile, isLoading, isDashboard }: { requests
         </div>
 
         <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto w-full"><table className="w-full text-left min-w-[700px]">
             <thead>
               <tr className="bg-gray-50/80 text-gray-600 text-[11px] uppercase tracking-widest font-semibold border-b border-gray-200/60">
                 <th className="px-6 py-4">Mã PNR</th>
@@ -1556,7 +1569,7 @@ function UserDashboard({ requests, profile, isLoading, isDashboard }: { requests
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
 
         {/* Mobile View - Card Layout */}
@@ -2498,7 +2511,7 @@ function UserManagement({ users, allRequests, profile, isLoading, onChatWithUser
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto w-full"><table className="w-full text-left min-w-[700px]">
             <thead>
               <tr className="bg-gray-50 text-black text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">Người dùng</th>
@@ -2560,7 +2573,7 @@ function UserManagement({ users, allRequests, profile, isLoading, onChatWithUser
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
 
         {!isLoading && filteredUsers.length > usersPerPage && (
@@ -3677,7 +3690,7 @@ function RefundRequestManagement({ requests, isLoading }: { requests: RefundRequ
             </div>
           </div>
         )}
-        <table className="w-full text-left">
+        <div className="overflow-x-auto w-full"><table className="w-full text-left min-w-[700px]">
           <thead>
             <tr className="bg-gray-50/80 text-gray-600 text-[11px] uppercase tracking-widest font-semibold border-b border-gray-200/60">
               <th className="px-6 py-4 w-10">
@@ -3794,7 +3807,7 @@ function RefundRequestManagement({ requests, isLoading }: { requests: RefundRequ
               </tr>
             )}
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {!isLoading && filteredRequests.length > requestsPerPage && (
@@ -3864,7 +3877,7 @@ function AuditLogView({ logs }: { logs: AuditLog[] }) {
           ))}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto w-full"><table className="w-full text-left min-w-[700px]">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-widest text-gray-600 font-semibold border-b border-gray-200/60">
                 <th className="px-6 py-4">Thời gian</th>
@@ -3937,7 +3950,7 @@ function AuditLogView({ logs }: { logs: AuditLog[] }) {
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
         {filteredLogs.length > logsPerPage && (
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -4150,7 +4163,7 @@ function AdminBookingManagement({ codes }: { codes: BookingCode[] }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <div className="overflow-x-auto w-full"><table className="w-full text-left min-w-[700px]">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-widest text-gray-600 font-semibold border-b border-gray-200/60">
                 <th className="px-6 py-4">Mã PNR</th>
@@ -4211,7 +4224,7 @@ function AdminBookingManagement({ codes }: { codes: BookingCode[] }) {
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
         {!isSaving && filteredCodes.length > codesPerPage && (
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
