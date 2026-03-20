@@ -6,8 +6,9 @@ export const auth = { currentUser: null };
 export const messaging = {};
 
 export const BUILT_IN_ADMINS = [
-  { uid: 'admin_123',        email: 'admin@aerorefund.com',            password: 'Matkhau1', displayName: 'Admin',           phoneNumber: '' },
-  { uid: 'admin_0968686868', email: 'phone_0968686868@aerorefund.com', password: 'Admin123', displayName: 'Admin 0968686868', phoneNumber: '0968686868' },
+  { uid: 'admin_123',        email: 'admin@aerorefund.com',            password: 'Matkhau1', displayName: 'Admin',                phoneNumber: '' },
+  { uid: 'admin_0968686868', email: 'hotro@aerorefund.com',            password: 'Admin123', displayName: 'Admin 0968686868',      phoneNumber: '0968686868' },
+  { uid: 'user_0356812812', email: 'nguyenvana@aerorefund.com',       password: '0356812812', displayName: 'Nguyễn Văn A',        phoneNumber: '0356812812' },
 ];
 
 // Cache để tránh đọc localStorage nhiều lần
@@ -42,7 +43,7 @@ const findUserByEmailAndPassword = (email: string, pass: string) => {
 };
 
 const isAdminEmail = (email: string) => {
-  return BUILT_IN_ADMINS.some(a => a.email === email);
+  return BUILT_IN_ADMINS.filter(a => !a.uid.startsWith('user_')).some(a => a.email === email);
 };
 
 export const signInWithEmailAndPassword = async (authIns: any, email: string, pass: string) => {
@@ -54,27 +55,65 @@ export const signInWithEmailAndPassword = async (authIns: any, email: string, pa
     throw err;
   }
 
-  // Tự động seed Firestore profile cho mock user nếu chưa có
-  const profilePath = 'users/' + user.uid;
-  const mockFirestore = (window as any).__mockFirestore = (window as any).__mockFirestore || {};
-  const existingProfile = mockFirestore[profilePath];
-  if (!existingProfile) {
-    const isAdmin = isAdminEmail(email);
-    mockFirestore[profilePath] = {
-      uid: user.uid,
-      email: email,
-      phoneNumber: user.phoneNumber || '',
-      displayName: user.displayName || email.split('@')[0],
-      role: isAdmin ? 'admin' : 'user',
-      status: 'active',
-    };
-    // Ghi vào localStorage
-    localStorage.setItem('col_users', JSON.stringify(
-      Object.values(mockFirestore).filter((v: any) => v.uid)
-    ));
+  const isAdmin = isAdminEmail(email);
+
+  // ƯU TIÊN: Lấy displayName từ Firestore profile (col_users) nếu đã tồn tại
+  let displayNameFromProfile: string | undefined;
+  try {
+    const existingProfiles = JSON.parse(localStorage.getItem('col_users') || '[]');
+    const storedProfile = existingProfiles.find((p: any) => p.uid === user.uid);
+    if (storedProfile && storedProfile.displayName) {
+      displayNameFromProfile = storedProfile.displayName;
+    }
+  } catch {}
+
+  // Ưu tiên Firestore profile > BUILT_IN_ADMINS > fallback
+  const displayNameToUse = displayNameFromProfile || user.displayName || email.split('@')[0];
+  const newProfile = {
+    uid: user.uid,
+    email: email,
+    phoneNumber: user.phoneNumber || '',
+    displayName: displayNameToUse,
+    role: isAdmin ? 'admin' : 'user',
+    status: 'active',
+  };
+
+  // Đồng bộ ngược displayName vào mockUsers cache để giữ nhất quán
+  const cachedUsers = getCachedUsers();
+  const cachedIdx = cachedUsers.findIndex((u: any) => u.uid === user.uid);
+  if (cachedIdx >= 0) {
+    cachedUsers[cachedIdx].displayName = displayNameToUse;
+    localStorage.setItem('mockUsers', JSON.stringify(dehydrateData(cachedUsers)));
+    invalidateUserCache();
   }
 
-  const mockUser = { uid: user.uid, email, phoneNumber: user.phoneNumber, displayName: user.displayName };
+  const mockFirestore = (window as any).__mockFirestore = (window as any).__mockFirestore || {};
+
+  // Seed/update Firestore profile
+  const profilePath = 'users/' + user.uid;
+  if (!mockFirestore[profilePath]) {
+    mockFirestore[profilePath] = newProfile;
+    const existingProfiles = JSON.parse(localStorage.getItem('col_users') || '[]');
+    const existingIdx = existingProfiles.findIndex((p: any) => p.uid === user.uid);
+    if (existingIdx >= 0) {
+      existingProfiles[existingIdx] = { ...existingProfiles[existingIdx], ...newProfile };
+    } else {
+      existingProfiles.push({ ...newProfile, id: user.uid });
+    }
+    localStorage.setItem('col_users', JSON.stringify(existingProfiles));
+  } else {
+    const existingProfiles = JSON.parse(localStorage.getItem('col_users') || '[]');
+    const existingIdx = existingProfiles.findIndex((p: any) => p.uid === user.uid);
+    if (existingIdx >= 0) {
+      const updated = { ...existingProfiles[existingIdx], ...newProfile, displayName: displayNameToUse };
+      existingProfiles[existingIdx] = updated;
+      localStorage.setItem('col_users', JSON.stringify(existingProfiles));
+      mockFirestore[profilePath] = updated;
+    }
+  }
+
+  // Lưu mockUser với displayName đã đồng bộ
+  const mockUser = { uid: user.uid, email, phoneNumber: user.phoneNumber, displayName: displayNameToUse };
   localStorage.setItem('mockUser', JSON.stringify(dehydrateData(mockUser)));
   return { user: mockUser };
 };
@@ -82,8 +121,19 @@ export const signInWithEmailAndPassword = async (authIns: any, email: string, pa
 export const onAuthStateChanged = (authIns: any, callback: any) => {
   const userStr = localStorage.getItem('mockUser');
   const user = userStr ? processData(JSON.parse(userStr)) : null;
+
+  if (user) {
+    // Luôn ưu tiên Firestore profile (col_users) cho displayName thật
+    try {
+      const storedUsers = JSON.parse(localStorage.getItem('col_users') || '[]');
+      const storedProfile = storedUsers.find((p: any) => p.uid === user.uid);
+      if (storedProfile && storedProfile.displayName) {
+        user.displayName = storedProfile.displayName;
+      }
+    } catch {}
+  }
+
   authIns.currentUser = user;
-  // Gọi callback ngay lập tức (không dùng setTimeout)
   callback(user);
   return () => {};
 };
@@ -199,8 +249,12 @@ export const doc = (dbIns: any, path: string, ...segments: string[]) => {
   return { id: docId, path: colPath };
 };
 
-export const collection = (dbIns: any, path: string) => {
-  return { path };
+export const collection = (dbIns: any, path: string, ...segments: string[]): { path: string } => {
+  let fullPath = path;
+  if (segments.length > 0) {
+    fullPath = [path, ...segments].join('/');
+  }
+  return { path: fullPath };
 };
 
 const getStorageCol = (path: string) => JSON.parse(localStorage.getItem('col_' + path) || '[]');
@@ -244,6 +298,18 @@ export const setDoc = async (docRef: any, data: any, options?: any) => {
     col.push({ ...data, id: docRef.id });
   }
   setStorageCol(docRef.path, col);
+
+  // Đồng bộ displayName/phoneNumber vào mockUsers khi profile được tạo/cập nhật
+  if (docRef.path === 'users' && data.uid) {
+    const users = getCachedUsers();
+    const userIdx = users.findIndex((u: any) => u.uid === data.uid);
+    if (userIdx >= 0) {
+      if (data.displayName !== undefined) users[userIdx].displayName = data.displayName;
+      if (data.sdt !== undefined) users[userIdx].phoneNumber = data.sdt;
+      localStorage.setItem('mockUsers', JSON.stringify(dehydrateData(users)));
+      invalidateUserCache();
+    }
+  }
 };
 
 export const updateDoc = async (docRef: any, data: any) => {
@@ -295,10 +361,19 @@ export const getDocs = (q: any) => {
   }
 
   return {
-    docs: col.map((item: any) => ({
-      id: item.id,
-      data: () => processData(item)
-    })),
+    docs: (() => {
+      // Deduplicate by id first — prevents duplicate key React warnings
+      const seen = new Set<string>();
+      const deduped = col.filter((item: any) => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+      return deduped.map((item: any) => ({
+        id: item.id,
+        data: () => processData(item)
+      }));
+    })(),
     empty: col.length === 0,
     size: col.length
   };
