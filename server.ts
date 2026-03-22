@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readFileSync } from "fs";
 import admin from "firebase-admin";
 import cors from "cors";
 
@@ -10,6 +11,7 @@ import authRouter from "./server/routes/auth.js";
 import usersRouter from "./server/routes/users.js";
 import refundsRouter from "./server/routes/refunds.js";
 import dataRouter from "./server/routes/data.js";
+import { db } from "./server/db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +32,18 @@ if (serviceAccount) {
   });
 } else {
   console.warn("[Startup] FIREBASE_SERVICE_ACCOUNT not configured or invalid. FCM notifications will not work.");
+}
+
+async function runMigration() {
+  const migrationPath = path.join(__dirname, 'migrations', '001_init.sql');
+  const sql = readFileSync(migrationPath, 'utf-8');
+  console.log('[Startup] Running database migration...');
+  try {
+    await db.query(sql);
+    console.log('[Startup] ✅ Database migration completed');
+  } catch (err) {
+    console.error('[Startup] ⚠️ Migration error (may be ok if tables exist):', err instanceof Error ? err.message : err);
+  }
 }
 
 async function startServer() {
@@ -122,4 +136,7 @@ startServer().catch((err) => {
   console.error('[Server] Unhandled startup error:', err);
   process.exit(1);
 });
+
+// Run migration on startup (only once)
+runMigration();
 

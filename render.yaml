@@ -1,3 +1,9 @@
+databases:
+  - name: hoantienve365-db
+    databaseName: hoantienve365
+    plan: free
+    ipAllowList: []
+
 services:
   - type: web
     name: hoantienve365
@@ -16,9 +22,11 @@ services:
           name: hoantienve365
           envVarKey: RENDER_EXTERNAL_URL
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: hoantienve365-db
+          property: connectionString
       - key: JWT_SECRET
-        sync: false
+        generateValue: true
       - key: JWT_EXPIRES_IN
         value: "7d"
       - key: FIREBASE_SERVICE_ACCOUNT
