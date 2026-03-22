@@ -1,26 +1,37 @@
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import 'dotenv/config';
 
 const DATABASE_URL = process.env.DATABASE_URL;
-if (!DATABASE_URL) {
-  console.error('DATABASE_URL not set in environment');
+
+function createPool() {
+  if (!DATABASE_URL) {
+    console.error('[DB] DATABASE_URL is not set — database queries will fail');
+    return null;
+  }
+  try {
+    const config: PoolConfig = {
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    };
+    return new Pool(config);
+  } catch (err) {
+    console.error('[DB] Failed to create pool:', err);
+    return null;
+  }
 }
 
-export const db = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: DATABASE_URL ? { rejectUnauthorized: false } : undefined,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
+export const db = createPool();
 
-db.on('error', (err) => {
+db?.on('error', (err) => {
   console.error('[DB] Unexpected error on idle client:', err);
 });
 
 export async function query<T = any>(text: string, params?: any[]) {
-  if (!db.options.connectionString) {
-    throw new Error('Database not configured: DATABASE_URL is missing');
+  if (!db) {
+    throw new Error('Database pool not initialized: DATABASE_URL is missing');
   }
   const start = Date.now();
   const res = await db.query<T>(text, params);
