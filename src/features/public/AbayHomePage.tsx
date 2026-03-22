@@ -11,41 +11,40 @@ export const AbayHomePage: React.FC<AbayHomePageProps> = ({ onLoginClick }) => {
     <div className="bg-white min-h-[100dvh] font-sans text-gray-800 antialiased selection:bg-orange-200">
       
       {/* Top Header */}
-      <div className="w-full max-w-[1020px] mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-sm relative z-10">
+      <div className="w-full max-w-[1200px] mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-sm relative z-10">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-black text-amber-500 italic tracking-tighter shadow-sm flex flex-col leading-none">
-            <span className="text-blue-900 text-xl font-bold not-italic mb-1">TRUNG TÂM HỖ TRỢ</span>
-            <span>HÀNG KHÔNG VIỆT NAM</span>
+          <h1 className="text-xl md:text-3xl font-black text-amber-500 italic tracking-tighter shadow-sm flex flex-col leading-none">
+            <span className="text-blue-900 text-base md:text-xl font-bold not-italic mb-1">TRUNG TÂM HỖ TRỢ</span>
+            <span className="text-sm md:text-base">HÀNG KHÔNG VIỆT NAM</span>
           </h1>
-          <p className="text-xs text-orange-600 font-bold ml-1 mt-1 uppercase">Dịch vụ hỗ trợ & Hoàn vé chuyên nghiệp 24/7</p>
+          <p className="text-[10px] md:text-xs text-orange-600 font-bold ml-0 md:ml-1 mt-1 uppercase">Dịch vụ hỗ trợ & Hoàn vé chuyên nghiệp 24/7</p>
         </div>
-        
       </div>
 
       {/* Main Navigation Menu */}
       <div className="w-full bg-[#113C85] shadow-md border-b-2 border-orange-500">
-        <div className="w-full max-w-[1020px] mx-auto flex items-center">
-          <button className="h-[42px] px-4 flex items-center justify-center bg-gradient-to-b from-blue-300 to-[#113C85] border-r border-[#1a4a9c]">
-            <Home size={22} className="text-white" />
+        <div className="w-full max-w-[1200px] mx-auto flex items-center">
+          <button className="h-[42px] px-3 md:px-4 flex items-center justify-center bg-gradient-to-b from-blue-300 to-[#113C85] border-r border-[#1a4a9c]">
+            <Home size={18} className="text-white" />
           </button>
-          <nav className="flex-1 flex text-[13px] font-bold text-white uppercase overflow-hidden tracking-tight leading-none">
-            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Trang chủ</a>
-            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Vé nội địa</a>
-            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Vé quốc tế</a>
-            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Hoàn Tiền Vé</a>
-            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Tin khuyến mại</a>
+          <nav className="flex-1 flex text-xs md:text-[13px] font-bold text-white uppercase overflow-hidden tracking-tight leading-none">
+            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-2 md:px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Trang chủ</a>
+            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-2 md:px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default hidden sm:flex">Vé nội địa</a>
+            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-2 md:px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default hidden md:flex">Vé quốc tế</a>
+            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-2 md:px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default">Hoàn Tiền Vé</a>
+            <a href="#" onClick={e => e.preventDefault()} className="h-[42px] px-2 md:px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c] cursor-default hidden sm:flex">Tin khuyến mại</a>
             <button
                onClick={onLoginClick}
-               className="h-[42px] px-5 flex items-center hover:bg-[#0d2e66] transition-colors border-x border-[#1a4a9c] ml-auto text-amber-300 group hover:text-amber-200 cursor-pointer"
+               className="h-[42px] px-3 md:px-5 flex items-center hover:bg-[#0d2e66] transition-colors border-x border-[#1a4a9c] ml-auto text-amber-300 group hover:text-amber-200 cursor-pointer"
             >
-              <LogIn size={15} className="mr-1.5 group-hover:scale-110 transition-transform" /> ĐĂNG NHẬP HỆ THỐNG
+              <LogIn size={14} className="mr-1 md:mr-1.5 group-hover:scale-110 transition-transform" /> <span className="hidden sm:inline">ĐĂNG NHẬP HỆ THỐNG</span><span className="sm:hidden">ĐĂNG NHẬP</span>
             </button>
           </nav>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="w-full max-w-[900px] mx-auto mt-4 flex flex-col md:flex-row gap-5 px-4 md:px-0">
+      <div className="w-full max-w-[1200px] mx-auto mt-4 flex flex-col lg:flex-row gap-5 px-4 md:px-6">
         
         {/* Left Column: Search Box */}
         <div className="w-full md:w-[420px] flex flex-col gap-4">
@@ -209,7 +208,7 @@ export const AbayHomePage: React.FC<AbayHomePageProps> = ({ onLoginClick }) => {
       </div>
       
       {/* Testimonials & FAQs Section */}
-      <div className="w-full max-w-[1020px] mx-auto mt-2 flex flex-col md:flex-row gap-5 px-4 md:px-0 mb-8 border-t border-gray-100 pt-6">
+      <div className="w-full max-w-[1200px] mx-auto mt-2 flex flex-col md:flex-row gap-5 px-4 md:px-6 mb-8 border-t border-gray-100 pt-6">
         {/* Testimonials */}
         <div className="flex-1 bg-[#FFF9E6] p-5 rounded-sm border border-[#F2E5B5] relative shadow-sm">
           <h3 className="text-[#0B3882] text-[18px] font-black tracking-tight mb-4">Khách hàng nói về chúng tôi</h3>
@@ -253,35 +252,35 @@ export const AbayHomePage: React.FC<AbayHomePageProps> = ({ onLoginClick }) => {
       </div>
 
       {/* Dark Blue Wide Footer */}
-      <div className="w-full bg-[#113C85] border-t-4 border-[#FFAA00] py-6 mt-2 relative z-10 overflow-hidden">
+      <div className="w-full bg-[#113C85] border-t-4 border-[#FFAA00] py-5 md:py-6 mt-2 relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/airline-bg.png')] bg-cover bg-center mix-blend-overlay opacity-10"></div>
-        <div className="w-full max-w-[1020px] mx-auto px-4 md:px-0 relative z-10">
+        <div className="w-full max-w-[1200px] mx-auto px-4 md:px-6 relative z-10">
           {/* Footer Grid */}
-          <div className="flex flex-col md:flex-row justify-between gap-6 md:gap-8 pb-6 border-b border-[#2151A1]/60">
-            <div className="text-white text-[12px] space-y-2">
-               <h4 className="text-[#FF8800] font-black text-[13px] uppercase mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={14} className="rotate-45" /> BẠN CÒN THẮC MẮC</h4>
+          <div className="flex flex-col md:flex-row justify-between gap-5 md:gap-8 pb-4 md:pb-6 border-b border-[#2151A1]/60">
+            <div className="text-white text-[11px] md:text-[12px] space-y-1.5 md:space-y-2">
+               <h4 className="text-[#FF8800] font-black text-xs md:text-[13px] uppercase mb-2 md:mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={12} className="rotate-45" /> BẠN CÒN THẮC MẮC</h4>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Liên hệ</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Hướng dẫn thanh toán</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Hướng dẫn đặt vé</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Câu hỏi thường gặp</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Chăm sóc khách hàng</p>
             </div>
-            <div className="text-white text-[12px] space-y-2">
-               <h4 className="text-[#FF8800] font-black text-[13px] uppercase mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={14} className="rotate-45" /> VỀ CHÚNG TÔI</h4>
+            <div className="text-white text-[11px] md:text-[12px] space-y-1.5 md:space-y-2">
+               <h4 className="text-[#FF8800] font-black text-xs md:text-[13px] uppercase mb-2 md:mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={12} className="rotate-45" /> VỀ CHÚNG TÔI</h4>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Giới thiệu</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Các đơn vị hợp tác</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Cấu trúc trang web</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Điều khoản sử dụng</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Chính sách bảo mật</p>
             </div>
-            <div className="text-white text-[12px] space-y-2">
-               <h4 className="text-[#FF8800] font-black text-[13px] uppercase mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={14} className="rotate-45" /> QUẢN LÝ ĐẶT HÀNG</h4>
+            <div className="text-white text-[11px] md:text-[12px] space-y-1.5 md:space-y-2">
+               <h4 className="text-[#FF8800] font-black text-xs md:text-[13px] uppercase mb-2 md:mb-3 flex items-center gap-1.5 drop-shadow"><Plane size={12} className="rotate-45" /> QUẢN LÝ ĐẶT HÀNG</h4>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Xem đơn hàng</p>
                <p className="hover:text-amber-200 cursor-default flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity"><span className="w-1 h-1 rounded-full bg-white opacity-50"></span> Thanh toán trực tuyến</p>
             </div>
           </div>
           {/* Copyright */}
-          <div className="text-right text-[10px] text-blue-200 mt-4 leading-relaxed max-w-sm ml-auto opacity-70">
+          <div className="text-right text-[9px] md:text-[10px] text-blue-200 mt-3 md:mt-4 leading-relaxed max-w-xs md:max-w-sm ml-auto opacity-70">
             TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM<br/>
             Số ĐKKD 01xxxxxxx - Mã số thuế: 0105xxxxxx<br/>
             © 2026 TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM. All Rights Reserved.

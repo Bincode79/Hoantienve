@@ -16,7 +16,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
       {/* Subtle Background Pattern */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent"></div>
       
-      <div className="w-full max-w-[1020px] mx-auto px-4 md:px-0 relative z-10">
+      <div className="w-full max-w-[1200px] mx-auto px-4 md:px-6 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           
           {/* Brand Info */}
