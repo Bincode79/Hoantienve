@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import admin from "firebase-admin";
+import cors from "cors";
 
 // Import custom routes
 import authRouter from "./server/routes/auth.js";
@@ -29,7 +30,11 @@ if (serviceAccount) {
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 5173;
-
+  
+  app.use(cors({
+    origin: ["https://hoantienve365.web.app", "https://hoantienve365.firebaseapp.com", "http://localhost:5173", "http://localhost:5175"],
+    credentials: true
+  }));
   app.use(express.json());
 
   // API Routes

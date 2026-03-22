@@ -7,7 +7,7 @@ export const db = {};
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 const TOKEN_KEY = 'aerorefund-auth-token';
-const API_BASE = '';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -23,7 +23,8 @@ function apiHeaders(): Record<string, string> {
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
   try {
-    const res = await fetch(path, {
+    const fullPath = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    const res = await fetch(fullPath, {
       ...options,
       headers: {
         ...apiHeaders(),
