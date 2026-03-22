@@ -1,7 +1,8 @@
 services:
   - type: web
-    name: ho-n-ti-n
+    name: hoantienve365
     runtime: node
+    region: singapore
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
@@ -9,16 +10,21 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false
+      - key: APP_URL
+        fromService:
+          type: web
+          name: hoantienve365
+          envVarKey: RENDER_EXTERNAL_URL
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: JWT_EXPIRES_IN
+        value: "7d"
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
       - key: VITE_FCM_VAPID_KEY
+        sync: false
+      - key: GEMINI_API_KEY
         sync: false
     healthCheckPath: /

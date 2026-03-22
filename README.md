@@ -27,8 +27,25 @@ Hệ thống hoàn tiền vé máy bay, minh bạch, bảo mật, an toàn và d
 - **Styling**: Tailwind CSS 4, Lucide Icons
 - **Animation**: Motion (Framer Motion)
 - **Backend**: Express.js, Firebase Admin
-- **Database**: Firebase Firestore (thời gian thực)
-- **Authentication**: Firebase Authentication
+- **Database**: Neon PostgreSQL (Cloud)
+- **Authentication**: Custom JWT Auth
+
+## Kiến trúc Authentication
+
+Hệ thống sử dụng **Custom JWT Authentication** với **Neon PostgreSQL** thay vì Firebase Authentication:
+
+```
+┌─────────────┐     ┌─────────────────┐     ┌──────────────────┐
+│   Client    │────▶│  Express API    │────▶│  Neon PostgreSQL │
+│  (React)    │◀────│  (JWT Bearer)   │◀────│   (Users, etc)   │
+└─────────────┘     └─────────────────┘     └──────────────────┘
+```
+
+### Cách hoạt động:
+1. Người dùng đăng nhập bằng **SĐT + Mật khẩu**
+2. Server xác thực và trả về **JWT Token**
+3. Client lưu token và gửi kèm mọi request
+4. Middleware xác thực JWT trên mỗi request
 
 ## Cài đặt
 
@@ -43,30 +60,24 @@ Hệ thống hoàn tiền vé máy bay, minh bạch, bảo mật, an toàn và d
 npm install
 ```
 
-2. **Tạo file `.env.local` với các biến môi trường cần thiết:**
-```bash
-cp .env.example .env.local
-```
-
 3. **Cấu hình các biến trong `.env.local`:**
 ```env
-# Firebase Client (VITE_* prefix để truy cập từ client-side)
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+# Database - Neon PostgreSQL
+DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 
-# Firebase Cloud Messaging (VAPID Key)
+# JWT Authentication
+JWT_SECRET="your-64-char-secret-key-here"
+JWT_EXPIRES_IN="7d"
+
+# Firebase Cloud Messaging (Server-side only)
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
 VITE_FCM_VAPID_KEY=your_vapid_key
 
-# Gemini AI API (Server-side only)
+# AI (Optional)
 GEMINI_API_KEY=your_gemini_api_key
 
-# Firebase Admin (Server-side only - JSON string của service account)
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+# App URL
+APP_URL="https://your-app.onrender.com"
 ```
 
 4. **Chạy ứng dụng:**

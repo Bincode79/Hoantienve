@@ -30,9 +30,28 @@ if (serviceAccount) {
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 5173;
+  const APP_URL = process.env.APP_URL || '*';
+  
+  // Extract domain from APP_URL for CORS
+  const allowedOrigins = [
+    "https://hoantienve365.web.app",
+    "https://hoantienve365.firebaseapp.com",
+    "http://localhost:5173",
+    "http://localhost:5175",
+  ];
+  
+  // Add Render domain if available
+  if (APP_URL && APP_URL !== '*') {
+    try {
+      const url = new URL(APP_URL);
+      allowedOrigins.push(url.origin);
+    } catch {
+      // Ignore invalid URLs
+    }
+  }
   
   app.use(cors({
-    origin: ["https://hoantienve365.web.app", "https://hoantienve365.firebaseapp.com", "http://localhost:5173", "http://localhost:5175"],
+    origin: allowedOrigins,
     credentials: true
   }));
   app.use(express.json());
