@@ -15,16 +15,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Firebase Admin
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
-  : null;
+let serviceAccount = null;
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  }
+} catch (error) {
+  console.error('[Startup] Failed to parse FIREBASE_SERVICE_ACCOUNT JSON. FCM will not work:', error);
+}
 
 if (serviceAccount) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
 } else {
-  console.warn("FIREBASE_SERVICE_ACCOUNT not found. FCM notifications will not work.");
+  console.warn("[Startup] FIREBASE_SERVICE_ACCOUNT not configured or invalid. FCM notifications will not work.");
 }
 
 async function startServer() {

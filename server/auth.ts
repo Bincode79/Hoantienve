@@ -17,19 +17,21 @@ export interface AuthenticatedRequest extends Request {
   userRole?: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET not set in environment');
-}
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET not set in environment');
+  }
+  return process.env.JWT_SECRET;
+};
 
 export function generateToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
   const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'];
-  return jwt.sign(payload, JWT_SECRET!, { expiresIn });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET!) as JwtPayload;
+    return jwt.verify(token, getJwtSecret()) as JwtPayload;
   } catch {
     return null;
   }
