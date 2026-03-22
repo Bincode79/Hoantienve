@@ -4,12 +4,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import admin from "firebase-admin";
 
+// Import custom routes
+import authRouter from "./server/routes/auth.js";
+import usersRouter from "./server/routes/users.js";
+import refundsRouter from "./server/routes/refunds.js";
+import dataRouter from "./server/routes/data.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Firebase Admin
-// In a real app, you'd use a service account JSON file.
-// For this environment, we'll use environment variables.
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
   : null;
@@ -28,7 +32,13 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Route to send notification
+  // API Routes
+  app.use("/api/auth", authRouter);
+  app.use("/api/users", usersRouter);
+  app.use("/api/refunds", refundsRouter);
+  app.use("/api/data", dataRouter);
+
+  // Legacy/Custom notify route
   app.post("/api/notify", async (req, res) => {
     const { token, title, body } = req.body;
 
@@ -80,3 +90,4 @@ async function startServer() {
 }
 
 startServer();
+

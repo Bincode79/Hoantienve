@@ -4,19 +4,27 @@
  */
 
 import { useState, useEffect } from 'react';
+import { UserProfile } from '../../types/index';
+import { formatPhone, getMockEmail } from '../../utils/index';
 import {
   auth, db,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
   updateProfile,
-  signOut,
   onAuthStateChanged,
-  doc, getDoc, setDoc,
+  onSnapshot,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
   serverTimestamp,
   FirebaseUser
 } from '../../mockFirebase';
-import { UserProfile } from '../../types';
-import { formatPhone, getMockEmail } from '../../utils';
+
+import { isAdminPhone } from '../../constants/admin';
 
 export const useAuth = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -39,25 +47,25 @@ export const useAuth = () => {
           setProfile(profileSnap.data() as UserProfile);
         } else {
           // Fallback if profile doesn't exist yet
-          const formattedPhone = firebaseUser.phoneNumber || firebaseUser.email?.split('_')[1]?.split('@')[0] || '';
-          const newProfile: UserProfile = {
-            uid: firebaseUser.uid,
+          const formattedPhone = firebaseUser.sdt || firebaseUser.id || '';
+          const newProfile = {
+            uid: firebaseUser.uid || firebaseUser.id,
             sdt: formattedPhone,
             displayName: firebaseUser.displayName || 'Người dùng mới',
             email: firebaseUser.email || undefined,
-            role: ['0999999999', '0383165313', '0968686868'].some(p => firebaseUser.email?.includes(p)) ? 'admin' : 'user',
+            role: isAdminPhone(formattedPhone) ? 'admin' : 'user',
             status: 'active',
             createdAt: serverTimestamp(),
           };
           await setDoc(profileRef, newProfile, { merge: true });
-          setProfile(newProfile);
+          setProfile(newProfile as UserProfile);
         }
         // Cập nhật mockUser localStorage với displayName từ Firestore profile
         if (profileSnap.exists()) {
           const firestoreProfile = profileSnap.data() as UserProfile;
           if (firestoreProfile.displayName && firebaseUser.displayName !== firestoreProfile.displayName) {
             const updatedMockUser = { ...firebaseUser, displayName: firestoreProfile.displayName };
-            localStorage.setItem('mockUser', JSON.stringify(updatedMockUser));
+            localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
           }
         }
       } else {
@@ -87,34 +95,39 @@ export const useAuth = () => {
     }
 
     const isEmailInput = phone.includes('@');
-    const loginIdentifier = isEmailInput ? phone.trim() : getMockEmail(formatPhone(phone));
+    const loginIdentifier = isEmailInput ? phone.trim() : (getMockEmail ? getMockEmail(formatPhone(phone)) : phone.trim());
 
     try {
-      const result = await signInWithEmailAndPassword(auth, loginIdentifier, pass);
+      const result = await signInWithEmailAndPassword(auth, loginIdentifier, pass) as any;
+
+      if (!result?.user) {
+        throw new Error('Authentication failed: No user returned');
+      }
 
       // Lấy profile từ Firestore ngay lập tức để đồng bộ displayName
       const profileRef = doc(db, 'users', result.user.uid);
       const profileSnap = await getDoc(profileRef);
       let finalDisplayName = result.user.displayName;
+      
       if (profileSnap.exists()) {
         const pf = profileSnap.data();
         if (pf.displayName) {
           finalDisplayName = pf.displayName;
           // Đồng bộ ngược vào mockUser để onAuthStateChanged đọc đúng
           const updatedMockUser = { ...result.user, displayName: finalDisplayName };
-          localStorage.setItem('mockUser', JSON.stringify(updatedMockUser));
+          localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
         }
       }
 
       setUser({ ...result.user, displayName: finalDisplayName });
     } catch (error: any) {
       console.error('Login error:', error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+      if (error.message?.includes('401') || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
         setLoginError('Mật khẩu không chính xác hoặc tài khoản không tồn tại.');
       } else if (error.code === 'auth/too-many-requests') {
         setLoginError('Quá nhiều yêu cầu. Vui lòng thử lại sau.');
       } else {
-        setLoginError('Đăng nhập thất bại. Vui lòng thử lại sau.');
+        setLoginError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại sau.');
       }
     } finally {
       setIsLoading(false);
@@ -156,15 +169,17 @@ export const useAuth = () => {
     }
 
     const formattedPhone = formatPhone(phone);
-    const isAdmin = ['0999999999', '0383165313', '0968686868'].includes(formattedPhone);
+    const isAdmin = isAdminPhone(formattedPhone);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), pass);
-      await updateProfile(userCredential.user, { displayName: displayName.trim() });
+      const result = await createUserWithEmailAndPassword(auth, formattedPhone, pass, displayName.trim()) as any;
+      if (!result?.user) throw new Error('Registration failed');
 
-      const profileRef = doc(db, 'users', userCredential.user.uid);
+      await updateProfile(result.user, { displayName: displayName.trim() });
+
+      const profileRef = doc(db, 'users', result.user.uid);
       await setDoc(profileRef, {
-        uid: userCredential.user.uid,
+        uid: result.user.uid,
         sdt: formattedPhone,
         displayName: displayName.trim(),
         email: email.trim(),
@@ -178,10 +193,10 @@ export const useAuth = () => {
       return true; // Success
     } catch (error: any) {
       console.error('Register error:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        setLoginError('Số điện thoại này đã được đăng ký.');
+      if (error.code === 'auth/email-already-in-use' || error.message?.includes('409')) {
+        setLoginError('Số điện thoại hoặc Email này đã được đăng ký.');
       } else {
-        setLoginError('Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
+        setLoginError(error.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
       }
       return false;
     } finally {
@@ -189,7 +204,7 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => signOut(auth);
+  const logout = () => firebaseSignOut(auth);
 
   return {
     user,

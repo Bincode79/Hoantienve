@@ -15,6 +15,7 @@ import {
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
 import { Badge } from "../../../components/Badge";
+import { useToast } from "../../../components/Toast";
 import { Pagination } from "../../../components/Pagination";
 import { EmptyState } from "../../../components/EmptyState";
 import { SkeletonRow } from "../../../components/SkeletonRow";
@@ -41,6 +42,7 @@ export function RefundRequestManagement({
   requests,
   isLoading,
 }: RefundRequestManagementProps) {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [filter, setFilter] = useState<RefundStatus | "all">("all");
@@ -186,7 +188,7 @@ export function RefundRequestManagement({
       setSelectedRequest(null);
     } catch (error) {
       console.error("Error saving request:", error);
-      alert("Lưu thay đổi thất bại. Vui lòng thử lại.");
+      toastError("Lỗi", "Lưu thay đổi thất bại. Vui lòng thử lại.");
     } finally {
       setIsSaving(false);
     }
@@ -319,7 +321,7 @@ export function RefundRequestManagement({
       }
     } catch (error) {
       console.error("Error updating request:", error);
-      alert("Cập nhật trạng thái yêu cầu thất bại. Vui lòng thử lại.");
+      toastError("Lỗi", "Cập nhật trạng thái yêu cầu thất bại. Vui lòng thử lại.");
     }
   };
 
@@ -346,7 +348,7 @@ export function RefundRequestManagement({
       });
     } catch (error) {
       console.error("Error toggling visibility:", error);
-      alert("Lỗi khi cập nhật hiển thị.");
+      toastError("Lỗi", "Lỗi khi cập nhật hiển thị.");
     }
   };
 
@@ -650,11 +652,11 @@ export function RefundRequestManagement({
                         rows={2}
                         value={editForm.adminNote || ""}
                         onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            adminNote: e.target.value,
-                          })
-                        }
+                            setEditForm({
+                              ...editForm,
+                              adminNote: e.target.value,
+                            })
+                          }
                         placeholder="Ghi chú cho khách hàng..."
                       />
                     </div>
@@ -1244,7 +1246,7 @@ export function RefundRequestManagement({
                         />
                       </td>
                       <td className="px-3 py-2.5 border-r border-gray-100 text-center">
-                        <Badge status={req.status} className="!text-[10px]" />
+                        <Badge status={req.status} />
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <div className="flex items-center justify-center gap-1.5">
@@ -1339,9 +1341,9 @@ export function RefundRequestManagement({
                         <div>
                           <p className="text-[13px] font-black text-[#0A58A3] uppercase tracking-tighter leading-none">{req.orderCode}</p>
                           <p className="text-[10px] text-gray-500 mt-1 font-bold">{formatDate(req.createdAt, "dd/MM/yyyy HH:mm")}</p>
-                        </div>
+                         </div>
                      </div>
-                     <Badge status={req.status} className="!text-[9px] !px-1.5 !py-0.5 shadow-sm" />
+                     <Badge status={req.status} />
                    </div>
 
                    <div className="grid grid-cols-2 gap-3 my-3">

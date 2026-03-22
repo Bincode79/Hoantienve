@@ -4,6 +4,8 @@
  */
 
 import { format } from 'date-fns';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export const translateRole = (role?: string) => {
   if (role === 'admin') return 'Quản trị viên';
@@ -33,10 +35,6 @@ export const formatDate = (date: any, formatStr: string) => {
   return '-';
 };
 
-
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -53,4 +51,13 @@ export const formatPhone = (phone: string) => {
 export const getMockEmail = (phone: string) => {
   if (phone === 'Admin') return 'admin@aerorefund.com';
   return `phone_${phone}@aerorefund.com`;
+};
+
+export const capitalizeName = (name?: string) => {
+  if (!name) return '';
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
 };

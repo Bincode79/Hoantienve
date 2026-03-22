@@ -1,35 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  LayoutDashboard,
-  Users,
-  TicketCheck,
-  Database,
-  ShieldCheck,
-  Ticket,
-  MessageCircle,
-  Shield,
-  LogOut,
-  Settings,
-  Sun,
-  Moon,
-  User as UserIcon,
-  PhoneCall,
-  Mail,
-  Clock,
-  Menu,
-  X
-} from 'lucide-react';
 
 // Hooks
 import { useAuth } from './features/auth/useAuth';
 import { useDashboardData } from './hooks/useDashboardData';
+import { useToast } from './components/Toast';
 
 // Components
 import { LoadingSpinner } from './components/LoadingSpinner';
-import { NotificationBell } from './components/NotificationBell';
 import { LoginForm } from './features/auth/LoginForm';
-import { RegisterForm } from './features/auth/RegisterForm';
 import { AuthLayout } from './features/auth/AuthLayout';
 import { UserDashboard } from './features/user/UserDashboard';
 import { AdminDashboard } from './features/admin/AdminDashboard';
@@ -40,22 +19,27 @@ import { AdminBookingManagement } from './features/admin/components/AdminBooking
 import { ProfileSettings } from './features/shared/components/ProfileSettings';
 import { AbayHomePage } from './features/public/AbayHomePage';
 
+// Layout Components
+import { AppHeader } from './components/layout/AppHeader';
+import { AppNavbar } from './components/layout/AppNavbar';
+import { GreetingBanner } from './components/layout/GreetingBanner';
+import { AppFooter } from './components/layout/AppFooter';
+
 // Utils & Types
-import { cn } from './utils';
 import { db, collection, query, getDocs } from './mockFirebase';
+import { User as UserIcon, Shield, TicketCheck, Ticket, MessageCircle, ShieldCheck, Settings } from 'lucide-react';
 
 export default function App() {
-  const { user, profile, loading, isLoading: authIsLoading, loginError, loginSuccess, login, register, logout: signOut } = useAuth();
+  const { user, profile, loading, isLoading: authIsLoading, loginError, loginSuccess, login, logout: signOut } = useAuth();
   const {
     requests,
     allRequests,
     users,
     auditLogs,
     bookingCodes,
-    messages,
-    conversations,
     isLoading: dataLoading
   } = useDashboardData(profile);
+  const { success, error } = useToast();
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'requests' | 'settings' | 'audit' | 'bookings'>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
@@ -67,7 +51,7 @@ export default function App() {
 
   const [dbStats, setDbStats] = useState<Record<string, number>>({});
   const [config, setConfig] = useState<any>({
-    brandName: 'TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM',
+    brandName: 'TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆV NAM',
     supportPhone: '1900 6091',
     supportEmail: 'hotro@aerorefund.com',
     workingHours: '0h - 24h',
@@ -124,10 +108,10 @@ export default function App() {
 
   const handleResetCollection = async (type: string) => {
     if (type === 'all') {
-      // For Cloud/Supabase, we usually don't delete all. For now, clear LocalStorage only
-      const keysToRemove = ['mockUser', 'theme'];
+      const keysToRemove = ['mockUser', 'theme', 'aerorefund-auth-token', 'auth_user'];
       keysToRemove.forEach(k => localStorage.removeItem(k));
-      window.location.reload();
+      success('Hệ thống', 'Đã xóa dữ liệu cục bộ. Hệ thống sẽ tải lại.');
+      setTimeout(() => window.location.reload(), 1500);
     } else {
       try {
         const q = query(collection(db, type));
@@ -137,9 +121,10 @@ export default function App() {
           await deleteDoc(doc(db, type, d.id));
         }
         await refreshDbStats();
+        success('Thành công', `Đã xóa bộ sưu tập ${type}`);
       } catch (err) {
         console.error('Reset error:', err);
-        alert('Lỗi khi xóa dữ liệu Cloud.');
+        error('Lỗi', 'Không thể xóa dữ liệu Cloud.');
       }
     }
   };
@@ -159,6 +144,7 @@ export default function App() {
     link.download = `aerorefund_db_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+    success('Xuất dữ liệu', 'Đã tải xuống file sao lưu dữ liệu.');
   };
 
   const handleImportDb = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,12 +157,25 @@ export default function App() {
         Object.entries(data).forEach(([key, val]) => {
           localStorage.setItem(key, JSON.stringify(val));
         });
-        window.location.reload();
+        success('Import thành công', 'Hệ thống sẽ tải lại sau giây lát.');
+        setTimeout(() => window.location.reload(), 2000);
       } catch (err) {
-        alert('Lỗi import dữ liệu: Định dạng không hợp lệ');
+        error('Lỗi Import', 'Định dạng file không hợp lệ.');
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleSaveConfig = async (newConfig: any) => {
+    try {
+      const { setDoc, doc, collection } = await import('./mockFirebase');
+      await setDoc(doc(db, 'config', 'main'), newConfig, { merge: true });
+      setConfig(newConfig);
+      success('Thành công', 'Đã cập nhật cấu hình hệ thống.');
+    } catch (err) {
+      console.error('Save config error:', err);
+      error('Lỗi', 'Không thể lưu cấu hình mới.');
+    }
   };
 
   const handleSeedData = async () => {
@@ -200,10 +199,10 @@ export default function App() {
         });
       }
       await refreshDbStats();
-      alert('Đã thêm dữ liệu mẫu vào Cloud Database!');
+      success('Seed dữ liệu', 'Đã thêm dữ liệu mẫu vào Cloud Database!');
     } catch (err) {
       console.error('Seed error:', err);
-      alert('Lỗi seed dữ liệu Cloud.');
+      error('Lỗi Seed', 'Không thể khởi tạo dữ liệu mẫu.');
     }
   };
 
@@ -252,189 +251,27 @@ export default function App() {
   return (
     <div className="bg-[#f0f2f5] min-h-[100dvh] font-sans text-gray-800 antialiased selection:bg-orange-200">
       
-      {/* Top Header - Sourced from AbayHomePage */}
-      <div className="container-safe py-3 flex flex-col sm:flex-row justify-between items-center bg-transparent relative z-10 gap-3 md:gap-0">
-        <div className="flex flex-col items-center sm:items-start">
-          <h1 className="text-3xl md:text-4xl font-black text-amber-500 italic tracking-tighter shadow-sm flex items-end">
-            <span className="text-blue-900 text-4xl md:text-5xl">365</span><span className="text-sm font-bold text-gray-600 no-italic ml-1 mb-1">.vn</span>
-          </h1>
-          <p className="text-[10px] md:text-xs text-orange-600 font-bold sm:ml-1 mt-1 uppercase">HỆ THỐNG {isAdmin ? 'QUẢN TRỊ' : 'ĐẠI LÝ'} VÉ MÁY BAY</p>
-        </div>
-        
-        <div className="flex items-center gap-2 text-center sm:text-right">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded bg-blue-100 flex items-center justify-center text-blue-800 shrink-0">
-             <PhoneCall size={18} className="md:w-6 md:h-6" strokeWidth={2} />
-          </div>
-          <div className="flex flex-col items-center sm:items-end">
-            <div className="text-[12px] md:text-sm text-gray-600 font-bold flex flex-wrap justify-center sm:justify-end gap-1 items-center">
-              <span>Tổng đài hỗ trợ:</span>
-              <span className="text-lg md:text-xl font-black text-red-600 tracking-tight">{config?.supportPhone || '1900 6091'}</span>
-            </div>
-            <div className="text-[9px] md:text-[10px] text-gray-500 font-semibold bg-gray-200/50 px-2 py-0.5 mt-0.5 rounded italic">Giờ làm việc: {config?.workingHours || '0h - 24h'}</div>
-          </div>
-        </div>
-      </div>
+      <AppHeader isAdmin={isAdmin} config={config} />
 
-      {/* Main Navigation Menu - Abay Style */}
-      <div className="w-full bg-[#113C85] shadow-md border-b-2 border-orange-500 sticky top-0 z-40">
-        <div className="container-safe flex items-center justify-between">
-          <div className="flex items-center">
-            <button
-              onClick={() => { setActiveTab('dashboard'); setIsMenuOpen(false); }}
-              className="min-w-[42px] h-[42px] px-4 flex items-center justify-center bg-gradient-to-b from-blue-300 to-[#113C85] border-r border-[#1a4a9c] flex-shrink-0"
-            >
-              <LayoutDashboard size={20} className="text-white" />
-            </button>
+      <AppNavbar 
+        isAdmin={isAdmin}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+        displayName={profile.displayName}
+        signOut={signOut}
+      />
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex text-[13px] font-bold text-white uppercase tracking-tight leading-none whitespace-nowrap">
-              {isAdmin ? (
-                <>
-                  <button
-                    onClick={() => setActiveTab('dashboard')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'dashboard' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <LayoutDashboard size={14} className="mr-1.5" /> Tổng quan
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('users')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'users' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <Users size={14} className="mr-1.5" /> Người dùng
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('requests')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'requests' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <TicketCheck size={14} className="mr-1.5" /> Hoàn vé
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('audit')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'audit' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <ShieldCheck size={14} className="mr-1.5" /> Nhật ký Admin
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('bookings')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'bookings' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <Database size={14} className="mr-1.5" /> Quản lý PNR
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setActiveTab('dashboard')}
-                    className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'dashboard' && "bg-[#0d2e66] text-amber-400")}
-                  >
-                    <TicketCheck size={14} className="mr-1.5" /> Quản lý hoàn vé
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'settings' && "bg-[#0d2e66] text-amber-400")}
-              >
-                <Settings size={14} className="mr-1.5" /> Cài đặt
-              </button>
-            </nav>
-            
-            {/* Mobile Navigation Title */}
-            <div className="md:hidden px-3 text-white font-bold text-[13px] uppercase tracking-wide">
-              {activeTab === 'dashboard' && 'Tổng quan'}
-              {activeTab === 'users' && 'Người dùng'}
-              {activeTab === 'requests' && 'Hoàn vé'}
-              {activeTab === 'audit' && 'Nhật ký'}
-              {activeTab === 'bookings' && 'PNR'}
-              {activeTab === 'settings' && 'Cài đặt'}
-            </div>
-          </div>
+      <GreetingBanner 
+        currentTime={currentTime}
+        displayName={profile.displayName}
+        isAdmin={isAdmin}
+        notificationCount={isAdmin ? adminStats.pendingCount : requests.filter(r => r.status === 'processing').length}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
 
-          {/* User Info & Hamburger */}
-          <div className="flex items-center h-[42px]">
-            <div className="hidden sm:flex h-full items-center border-x border-[#1a4a9c]">
-              <div className="px-3 flex items-center gap-2 text-amber-300">
-                <UserIcon size={14} />
-                <span className="text-white max-w-[80px] md:max-w-[120px] truncate">{profile.displayName}</span>
-              </div>
-            </div>
-            <button onClick={signOut} className="hidden sm:flex h-full px-4 hover:bg-red-700 bg-red-600 transition-colors items-center text-white gap-1.5 font-black uppercase text-[12px]">
-              <LogOut size={14} /> Thoát
-            </button>
-            
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden h-full px-4 flex items-center justify-center text-white bg-[#0d2e66] border-l border-[#1a4a9c]"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Slide-down Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden bg-[#0d2e66] border-t border-blue-800 overflow-hidden"
-            >
-              <div className="flex flex-col py-2">
-                {isAdmin ? (
-                  <>
-                    <button onClick={() => { setActiveTab('dashboard'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'dashboard' && "text-amber-400 bg-blue-900")}>
-                      <LayoutDashboard size={16} /> Tổng quan
-                    </button>
-                    <button onClick={() => { setActiveTab('users'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'users' && "text-amber-400 bg-blue-900")}>
-                      <Users size={16} /> Người dùng
-                    </button>
-                    <button onClick={() => { setActiveTab('requests'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'requests' && "text-amber-400 bg-blue-900")}>
-                      <TicketCheck size={16} /> Hoàn vé
-                    </button>
-                    <button onClick={() => { setActiveTab('audit'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'audit' && "text-amber-400 bg-blue-900")}>
-                      <ShieldCheck size={16} /> Nhật ký Admin
-                    </button>
-                    <button onClick={() => { setActiveTab('bookings'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'bookings' && "text-amber-400 bg-blue-900")}>
-                      <Database size={16} /> Quản lý PNR
-                    </button>
-                  </>
-                ) : (
-                  <button onClick={() => { setActiveTab('dashboard'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'dashboard' && "text-amber-400 bg-blue-900")}>
-                    <TicketCheck size={16} /> Quản lý hoàn vé
-                  </button>
-                )}
-                <button onClick={() => { setActiveTab('settings'); setIsMenuOpen(false); }} className={cn("px-6 py-3 text-left font-bold text-white border-b border-blue-900/50 flex items-center gap-2", activeTab === 'settings' && "text-amber-400 bg-blue-900")}>
-                  <Settings size={16} /> Cài đặt
-                </button>
-                <button onClick={signOut} className="px-6 py-4 text-left font-bold text-red-400 flex items-center gap-2 mt-2">
-                  <LogOut size={16} /> Đăng xuất hệ thống
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Greeting Banner */}
-      <div className="w-full bg-white border-b border-gray-200">
-        <div className="container-safe py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] md:text-[13px] gap-2 sm:gap-0">
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-left">
-            <span className="text-gray-600 font-semibold">{new Intl.DateTimeFormat('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentTime)}</span>
-            <span className="hidden sm:inline text-gray-300">|</span>
-            <span className="text-red-500 font-bold">Xin chào, {profile.displayName} ({isAdmin ? 'Q.Trị' : 'Đại lý'})</span>
-          </div>
-          <div className="flex items-center gap-4">
-             <NotificationBell count={isAdmin ? adminStats.pendingCount : requests.filter(r => r.status === 'processing').length} onClick={() => { }} />
-             <button onClick={toggleDarkMode} className="text-gray-500 hover:text-orange-500 transition-colors bg-gray-100 p-1.5 rounded-full">
-               {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
-             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Dynamic Content Area */}
       <main className="w-full max-w-[900px] mx-auto py-6 px-4 md:px-0">
         <AnimatePresence mode="wait">
           <motion.div
@@ -457,6 +294,7 @@ export default function App() {
                   handleSeedData={handleSeedData}
                   config={config}
                   onUpdateConfig={refreshDbStats}
+                  handleSaveConfig={handleSaveConfig}
                 />
               ) : (
                 <UserDashboard requests={requests} profile={profile} isDashboard={true} />
@@ -494,81 +332,8 @@ export default function App() {
         </AnimatePresence>
       </main>
       
-      {/* Dark Blue Wide Footer - Abay Style */}
-      <div className="w-full bg-[#113C85] border-t-4 border-[#FFAA00] py-8 mt-10 relative z-10 overflow-hidden">
-        {/* Wave decoration */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#FFAA00] to-transparent"></div>
-        </div>
-
-        <div className="w-full max-w-[1020px] mx-auto px-4 md:px-0 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
-            {/* Brand */}
-            <div>
-              <div className="flex items-end gap-1.5 mb-2">
-                <span className="text-2xl font-black text-amber-400 italic tracking-tighter">365</span>
-                <span className="text-sm font-bold text-blue-300 no-italic mb-0.5">.vn</span>
-              </div>
-              <p className="text-[11px] text-blue-200 leading-relaxed">
-                Hệ thống quản lý đại lý<br/>
-                & hoàn vé máy bay tự động
-              </p>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h4 className="text-[11px] font-black text-amber-400 uppercase tracking-wider mb-2">Liên hệ hỗ trợ</h4>
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2 text-[11px] text-blue-200">
-                  <PhoneCall size={12} className="text-amber-400 shrink-0" />
-                  <span>Tổng đài: <span className="text-white font-bold">{config?.supportPhone || '1900 6091'}</span></span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-blue-200">
-                  <Mail size={12} className="text-amber-400 shrink-0" />
-                  <span>{config?.supportEmail || 'hotro@aerorefund.com'}</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-blue-200">
-                  <Clock size={12} className="text-amber-400 shrink-0" />
-                  <span>Giờ làm việc: {config?.workingHours || '0h - 24h'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Policies */}
-            <div>
-              <h4 className="text-[11px] font-black text-amber-400 uppercase tracking-wider mb-2">Chính sách</h4>
-              <div className="flex flex-col gap-1">
-                {['Điều khoản sử dụng', 'Chính sách bảo mật', 'Quy trình hoàn vé', 'Phí dịch vụ'].map(item => (
-                  <div key={item} className="text-[11px] text-blue-200 cursor-pointer hover:text-amber-400 transition-colors">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-blue-700 pt-3">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-              <div className="text-[10px] text-blue-300 text-center md:text-left leading-relaxed">
-                {config?.copyright || '© 2026 365.vn — Hệ thống quản lý đại lý & hoàn vé tự động.'}<br/>
-                <span className="text-blue-400">Mọi hành vi sao chép, phát hành nội dung mà không có sự đồng ý đều bị nghiêm cấm.</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {['Facebook', 'Zalo', 'YouTube'].map(social => (
-                  <div key={social} className="text-[10px] text-blue-300 bg-blue-800/50 px-2 py-0.5 rounded cursor-pointer hover:bg-blue-700 hover:text-amber-400 transition-colors">
-                    {social}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AppFooter config={config} />
 
     </div>
   );
 }
-

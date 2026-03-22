@@ -305,7 +305,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                            {req.createdAt ? format(req.createdAt.toDate(), 'dd/MM/yyyy HH:mm') : '-'}
                         </td>
                         <td className="px-3 py-2.5 text-center border-r border-gray-100">
-                          <Badge status={req.status} className="!text-[10px] !px-1.5 !py-0.5 shadow-sm uppercase font-black" />
+                           <Badge status={req.status} />
                           {req.isVisible !== false && req.adminNote && (
                             <div className="text-[10px] text-red-600 italic mt-1 leading-tight w-24 mx-auto truncate" title={req.adminNote}>{req.adminNote}</div>
                           )}
@@ -343,7 +343,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                         <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Mã PNR</div>
                         <div className="text-lg font-black text-blue-900">{req.orderCode}</div>
                       </div>
-                      <Badge status={req.status} className="!text-[9px] shadow-sm uppercase font-black" />
+                      <Badge status={req.status} />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 py-2 border-y border-dashed border-gray-200 my-2">

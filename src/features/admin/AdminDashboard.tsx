@@ -18,6 +18,7 @@ import {
 import { Badge } from '../../components/Badge';
 import { EmptyState } from '../../components/EmptyState';
 import { UserProfile, RefundRequest } from '../../types';
+import { useToast } from '../../components/Toast';
 
 interface AdminDashboardProps {
   stats: {
@@ -36,6 +37,7 @@ interface AdminDashboardProps {
   handleSeedData: () => void;
   config: any;
   onUpdateConfig: () => void;
+  handleSaveConfig: (newConfig: any) => Promise<void>;
 }
 
 export function AdminDashboard({ 
@@ -48,16 +50,24 @@ export function AdminDashboard({
   handleImportDb,
   handleSeedData,
   config,
-  onUpdateConfig
+  onUpdateConfig,
+  handleSaveConfig: doSaveConfig
 }: AdminDashboardProps) {
   const [resetConfirm, setResetConfirm] = useState<{ type: string; label: string } | null>(null);
   const [isEditingConfig, setIsEditingConfig] = useState(false);
   const [editConfig, setEditConfig] = useState<any>(config);
 
-  const handleSaveConfig = () => {
-    localStorage.setItem('col_config', JSON.stringify([editConfig]));
-    setIsEditingConfig(false);
-    onUpdateConfig();
+  const { success, error } = useToast();
+
+  const handleSaveConfig = async () => {
+    try {
+      await doSaveConfig(editConfig);
+      setIsEditingConfig(false);
+      success('Cấu hình đã được lưu thành công!');
+    } catch (err) {
+      console.error('Save config error:', err);
+      error('Lỗi khi lưu cấu hình.');
+    }
   };
 
   return (
@@ -127,7 +137,7 @@ export function AdminDashboard({
                       <p className="text-[11px] text-gray-500">{req.userEmail}</p>
                     </div>
                   </div>
-                  <Badge status={req.status} className="!text-[10px] !px-1.5 !py-0.5" />
+                  <Badge status={req.status} />
                 </div>
               ))
             )}
@@ -153,7 +163,7 @@ export function AdminDashboard({
                     <p className="text-[11px] text-gray-500">{u.email}</p>
                   </div>
                 </div>
-                <Badge status={u.role} className="!text-[10px] !px-1.5 !py-0.5" />
+                <Badge status={u.role} />
               </div>
             ))}
           </div>

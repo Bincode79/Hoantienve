@@ -31,7 +31,9 @@ const AnimatedStatCard: React.FC<AnimatedStatCardProps> = ({ label, value, icon,
     <div className="bg-white border border-gray-200 shadow-sm rounded-sm p-5 cursor-default group relative overflow-hidden">
       <div className="flex items-center justify-between mb-2">
         <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center border transition-colors duration-300 group-hover:bg-opacity-20", accentColors[accent])}>
-          {React.cloneElement(icon as React.ReactElement, { size: 18 })}
+          {React.isValidElement<{ size?: number }>(icon)
+            ? React.cloneElement(icon, { size: 18 })
+            : icon}
         </div>
       </div>
       <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{label}</p>

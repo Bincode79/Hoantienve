@@ -12,6 +12,7 @@ import {
   Ticket
 } from 'lucide-react';
 import { Badge } from '../../../components/Badge';
+import { useToast } from '../../../components/Toast';
 import { Pagination } from '../../../components/Pagination';
 import { EmptyState } from '../../../components/EmptyState';
 import { SkeletonRow } from '../../../components/SkeletonRow';
@@ -43,6 +44,7 @@ export function UserManagement({
   isLoading,
   onChatWithUser
 }: UserManagementProps) {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [userSearch, setUserSearch] = useState('');
@@ -124,7 +126,7 @@ export function UserManagement({
       }, 1500);
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Cập nhật thông tin người dùng thất bại. Vui lòng thử lại.');
+      toastError('Lỗi', 'Cập nhật thông tin người dùng thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -139,7 +141,7 @@ export function UserManagement({
       setUserToDelete(null);
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Khóa người dùng thất bại. Vui lòng thử lại.');
+      toastError('Lỗi', 'Khóa người dùng thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -232,8 +234,8 @@ export function UserManagement({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.role} className="!text-[10px] !px-1.5 !py-0.5" /></td>
-                    <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.status} className="!text-[10px] !px-1.5 !py-0.5" /></td>
+                    <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.role} /></td>
+                    <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.status} /></td>
                     <td className="px-3 py-2.5 text-center text-[12px] text-gray-600 border-r border-gray-100">
                       {formatDate(u.createdAt, 'dd/MM/yyyy')}
                     </td>
@@ -283,8 +285,8 @@ export function UserManagement({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Badge status={u.role} className="!text-[9px] !px-1 !py-0.5" />
-                    <Badge status={u.status} className="!text-[9px] !px-1 !py-0.5" />
+                    <Badge status={u.role} />
+                    <Badge status={u.status} />
                   </div>
                 </div>
 
@@ -443,7 +445,7 @@ export function UserManagement({
                               <Ticket size={14} className="text-gray-500" />
                               <span className="text-[13px] font-bold text-black">{req.orderCode}</span>
                            </div>
-                           <Badge status={req.status} className="!text-[10px] !px-1.5 !py-0.5" />
+                           <Badge status={req.status} />
                         </div>
                         <div className="flex justify-between items-end border-t border-gray-100 pt-2">
                            <div className="text-[11px] text-gray-600">
