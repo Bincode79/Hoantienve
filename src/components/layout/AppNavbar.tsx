@@ -103,7 +103,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
           <div className="hidden sm:flex h-full items-center border-x border-[#1a4a9c]">
             <div className="px-3 flex items-center gap-2 text-amber-300">
               <UserIcon size={14} />
-              <span className="text-white max-w-[80px] md:max-w-[120px] truncate">{displayName}</span>
+              <span className="text-amber-100 font-semibold max-w-[80px] md:max-w-[120px] truncate">{displayName}</span>
             </div>
           </div>
           <button onClick={signOut} className="hidden sm:flex h-full px-4 hover:bg-red-700 bg-red-600 transition-colors items-center text-white gap-1.5 font-black uppercase text-[12px]">
