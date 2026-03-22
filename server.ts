@@ -108,11 +108,6 @@ async function startServer() {
     });
   }
 
-  } catch (err) {
-    console.error('[Server] Startup error:', err);
-    process.exit(1);
-  }
-
   app.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
