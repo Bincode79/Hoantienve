@@ -3,12 +3,12 @@ import 'dotenv/config';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL not set in environment');
+  console.error('DATABASE_URL not set in environment');
 }
 
 export const db = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: DATABASE_URL ? { rejectUnauthorized: false } : undefined,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
@@ -19,6 +19,9 @@ db.on('error', (err) => {
 });
 
 export async function query<T = any>(text: string, params?: any[]) {
+  if (!db.options.connectionString) {
+    throw new Error('Database not configured: DATABASE_URL is missing');
+  }
   const start = Date.now();
   const res = await db.query<T>(text, params);
   const duration = Date.now() - start;
