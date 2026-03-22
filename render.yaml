@@ -9,9 +9,13 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - key: NEXT_PUBLIC_SUPABASE_URL
+      - key: VITE_SUPABASE_URL
         sync: false
-      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
         sync: false
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
