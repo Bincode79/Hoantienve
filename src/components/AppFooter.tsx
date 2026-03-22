@@ -12,67 +12,52 @@ interface AppFooterProps {
 
 export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
   return (
-    <footer className="w-full bg-slate-900 pt-16 pb-8 text-slate-400 relative overflow-hidden">
+    <footer className="w-full bg-[#113C85] border-t-4 border-[#FFAA00] py-8 mt-10 relative z-10 overflow-hidden">
       {/* Subtle Background Pattern */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent"></div>
       
-      <div className="container-premium relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+      <div className="w-full max-w-[1020px] mx-auto px-4 md:px-0 relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           
           {/* Brand Info */}
-          <div className="md:col-span-4 space-y-6">
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="bg-primary-500 p-2 rounded-xl shadow-lg shadow-primary-500/20 group-hover:rotate-12 transition-transform duration-500">
-                <Plane className="text-white rotate-45" size={20} strokeWidth={2.5} />
-              </div>
-              <h1 className="text-2xl font-display font-extrabold tracking-tight flex items-baseline leading-none text-white">
+          <div className="col-span-1 space-y-4">
+            <div className="flex items-center gap-2">
+              <Plane className="text-[#FFAA00] rotate-45" size={24} strokeWidth={2.5} />
+              <h1 className="text-2xl font-bold tracking-tight flex items-baseline leading-none text-white">
                 <span>365</span>
-                <span className="text-slate-500 text-lg ml-0.5">.vn</span>
+                <span className="text-[#FFAA00] text-lg ml-0.5">.vn</span>
               </h1>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs">
-              Hệ thống cung cấp giải pháp quản lý đại lý & xử lý hoàn vé máy bay chuyên nghiệp hàng đầu tại Việt Nam.
+            <p className="text-xs text-blue-200 leading-relaxed max-w-xs">
+              Hệ thống quản lý đại lý & hoàn vé máy bay tự động
             </p>
-            <div className="flex gap-4">
-              {['FB', 'ZL', 'YT'].map(social => (
-                <div key={social} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white hover:bg-primary-500 hover:border-primary-500 transition-all cursor-pointer">
-                  {social}
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Contact Links */}
-          <div className="md:col-span-4 space-y-6">
-            <h4 className="text-sm font-display font-bold text-white uppercase tracking-widest">Hỗ trợ khách hàng</h4>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 group">
-                <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-primary-400 group-hover:bg-primary-500 group-hover:text-white transition-all">
-                  <PhoneCall size={18} />
-                </div>
-                <div>
-                   <span className="text-[10px] uppercase font-bold tracking-widest block text-slate-500 mb-0.5">Tổng đài 24/7</span>
-                   <span className="text-white font-display font-bold text-lg">{config?.supportPhone || '1900 6091'}</span>
-                </div>
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-xs font-bold text-[#FFAA00] uppercase tracking-wider">Liên hệ hỗ trợ</h4>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-blue-200">
+                <PhoneCall size={14} className="text-[#FFAA00]" />
+                <span className="font-semibold text-white">Tổng đài: {config?.supportPhone || '1900 6091'}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm hover:text-white transition-colors cursor-pointer group">
-                 <Mail size={16} className="text-slate-600 group-hover:text-primary-400" />
-                 <span>{config?.supportEmail || 'hotro@bay365.vn'}</span>
+              <div className="flex items-center gap-2 text-blue-200">
+                 <Mail size={14} className="text-[#FFAA00]" />
+                 <span>{config?.supportEmail || 'hotro@aerorefund.com'}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                 <Clock size={16} className="text-slate-600" />
-                 <span>Giờ làm việc: {config?.workingHours || '07:00 - 22:00'}</span>
+              <div className="flex items-center gap-2 text-blue-200">
+                 <Clock size={14} className="text-[#FFAA00]" />
+                 <span>Giờ làm việc: {config?.workingHours || '0h - 24h'}</span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="md:col-span-2 space-y-6">
-            <h4 className="text-sm font-display font-bold text-white uppercase tracking-widest">Dịch vụ</h4>
-            <ul className="space-y-3 text-sm">
-              {['Vé nội địa', 'Vé quốc tế', 'Hoàn vé tự động', 'Hỗ trợ đại lý'].map(item => (
-                <li key={item} className="hover:text-primary-400 transition-colors cursor-pointer flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-700"></div>
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-xs font-bold text-[#FFAA00] uppercase tracking-wider">Chính sách</h4>
+            <ul className="space-y-2 text-xs text-blue-200">
+              {['Điều khoản sử dụng', 'Chính sách bảo mật', 'Quy trình hoàn vé', 'Hướng dẫn sử dụng'].map(item => (
+                <li key={item} className="hover:text-white transition-colors cursor-pointer">
                   {item}
                 </li>
               ))}
@@ -80,12 +65,11 @@ export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
           </div>
 
           {/* Policy Links */}
-          <div className="md:col-span-2 space-y-6">
-            <h4 className="text-sm font-display font-bold text-white uppercase tracking-widest">Pháp lý</h4>
-            <ul className="space-y-3 text-sm">
-              {['Điều khoản', 'Bảo mật', 'Quy trình xử lý', 'Liên hệ'].map(item => (
-                <li key={item} className="hover:text-primary-400 transition-colors cursor-pointer flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-700"></div>
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-xs font-bold text-[#FFAA00] uppercase tracking-wider">Dịch vụ</h4>
+            <ul className="space-y-2 text-xs text-blue-200">
+              {['Vé máy bay nội địa', 'Vé máy bay quốc tế', 'Hoàn vé tự động', 'Hỗ trợ đại lý'].map(item => (
+                <li key={item} className="hover:text-white transition-colors cursor-pointer">
                   {item}
                 </li>
               ))}
@@ -94,19 +78,14 @@ export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500 font-medium">
-            {config?.copyright || '© 2026 VIETNAM AEROLINE SUPPORT CENTER. All Rights Reserved.'}
+        <div className="border-t border-blue-700/30 pt-3 flex flex-col md:flex-row justify-between items-center gap-2">
+          <p className="text-[10px] text-blue-300">
+            © 2026 365.vn - Hệ thống hoàn vé máy bay. Mọi hành vi sao chép khi chưa được cho phép đều bị nghiêm cấm.
           </p>
-          <div className="flex items-center gap-6">
-             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-               <ShieldCheck size={14} className="text-emerald-500" />
-               Hệ thống đã mã hóa
-             </div>
-             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-               <HelpCircle size={14} className="text-primary-500" />
-               Trung tâm hỗ trợ
-             </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-blue-300 hover:text-white cursor-pointer transition-colors">Facebook</span>
+            <span className="text-[10px] text-blue-300 hover:text-white cursor-pointer transition-colors">Zalo</span>
+            <span className="text-[10px] text-blue-300 hover:text-white cursor-pointer transition-colors">YouTube</span>
           </div>
         </div>
       </div>

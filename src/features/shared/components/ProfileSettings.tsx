@@ -86,6 +86,7 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
               <input
                 type="email"
                 className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                placeholder="Nhập email của bạn"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
@@ -128,33 +129,6 @@ export function ProfileSettings({ profile }: ProfileSettingsProps) {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <h4 className="text-sm font-bold text-black mb-4 flex items-center gap-2">
-                <Bell size={16} className="text-blue-600" />
-                Thông báo
-              </h4>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <div>
-                  <p className="text-sm font-semibold text-black">Thông báo đẩy (FCM)</p>
-                  <p className="text-xs text-black">Nhận thông báo về trạng thái hoàn vé và tin tức mới nhất.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                  className={cn(
-                    "relative inline-flex h-6 w-11 items-center rounded-2xl transition-colors focus:outline-none",
-                    notificationsEnabled ? "bg-blue-600" : "bg-gray-300"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-4 w-4 transform rounded-2xl bg-white transition-transform",
-                      notificationsEnabled ? "translate-x-6" : "translate-x-1"
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="pt-4 border-t border-gray-100 flex justify-end">

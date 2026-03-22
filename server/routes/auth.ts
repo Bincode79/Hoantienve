@@ -4,6 +4,14 @@ import { db } from '../db';
 import { PoolClient } from 'pg';
 import { generateToken, verifyToken, requireAuth, requireAdmin, AuthenticatedRequest } from '../auth';
 
+// Admin phone numbers that bypass lock checks
+const ADMIN_PHONE_NUMBERS = ['0999999999', '0383165313', '0968686868', '0912345678'];
+
+function isAdminPhone(phone: string): boolean {
+  if (phone === 'Admin') return true;
+  return ADMIN_PHONE_NUMBERS.includes(phone);
+}
+
 const router = Router();
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
@@ -21,6 +29,11 @@ router.post('/login', async (req: Request, res: Response) => {
 
   try {
     // 1. Tìm user bằng SĐT hoặc email
+    // Admin accounts bypass the status check - they can never be locked out
+    const statusCondition = isAdminPhone(loginId) 
+      ? `(sdt = $1 OR email = $1)` 
+      : `(sdt = $1 OR email = $1) AND COALESCE(status, 'active') = 'active'`;
+    
     const userResult = await db.query<{
       id: string;
       sdt: string;
@@ -32,7 +45,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }>(
       `SELECT id, sdt, email, password_hash, display_name, role, status
        FROM public.users
-       WHERE (sdt = $1 OR email = $1) AND COALESCE(status, 'active') = 'active'
+       WHERE ${statusCondition}
        LIMIT 1`,
       [loginId],
     );

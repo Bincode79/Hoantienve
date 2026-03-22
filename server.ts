@@ -48,7 +48,7 @@ async function runMigration() {
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 5173;
+  const PORT = process.env.PORT || 3001;
   const APP_URL = process.env.APP_URL || '*';
   
   // Extract domain from APP_URL for CORS
@@ -128,7 +128,7 @@ async function startServer() {
   }
 
   app.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`API Server running on http://localhost:${PORT}`);
   });
 }
 

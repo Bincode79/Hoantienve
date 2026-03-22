@@ -7,11 +7,23 @@ export const db = {};
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 const TOKEN_KEY = 'aerorefund-auth-token';
-const API_BASE = import.meta.env.VITE_API_URL || '';
+// Use empty string for same-origin (Vite dev server proxies to Express)
+// Set VITE_API_URL only for production/CORS scenarios
+const API_BASE = (import.meta.env.VITE_API_URL as string) || '';
+
+// Debug: log API_BASE on load
+console.log('[mockFirebase] API_BASE:', API_BASE);
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
+  // Debug: log first 20 chars of token if exists
+  if (token) {
+    console.log('[mockFirebase] Token found:', token.substring(0, 20) + '...');
+  } else {
+    console.log('[mockFirebase] Token NOT found in localStorage');
+  }
+  return token;
 }
 
 function apiHeaders(): Record<string, string> {
@@ -288,17 +300,30 @@ export const getDoc = async (docRef: any) => {
   const path = docRef.table === 'data/config'
     ? '/api/data/config'
     : `/api/${docRef.table}/${docRef.id}`;
-  const raw = await apiFetch(path);
-  const data = raw?.config ?? raw?.item ?? raw?.user ?? raw?.refund ?? raw;
-  const d = fromSnakeCase(data);
-  if (docRef.table?.includes('users') && d?.uid == null && d?.id != null) {
-    d.uid = d.id;
+  
+  try {
+    const raw = await apiFetch(path);
+    const data = raw?.config ?? raw?.item ?? raw?.user ?? raw?.refund ?? raw;
+    const d = fromSnakeCase(data);
+    if (docRef.table?.includes('users') && d?.uid == null && d?.id != null) {
+      d.uid = d.id;
+    }
+    return {
+      exists: () => !!d && Object.keys(d).length > 0,
+      data: () => d,
+      id: docRef.id,
+    };
+  } catch (err: any) {
+    // Return exists: false for 404 errors instead of throwing
+    if (err?.message?.includes('404') || err?.message?.includes('Không tìm thấy')) {
+      return {
+        exists: () => false,
+        data: () => null,
+        id: docRef.id,
+      };
+    }
+    throw err;
   }
-  return {
-    exists: () => !!d && Object.keys(d).length > 0,
-    data: () => d,
-    id: docRef.id,
-  };
 };
 
 export const setDoc = async (docRef: any, data: any, _options?: any) => {
@@ -402,6 +427,8 @@ export const getDocs = async (q: any) => {
   } catch (err: any) {
     if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
       console.warn('[getDocs] Not authenticated, returning empty results');
+    } else if (err?.message?.includes('403') || err?.message?.includes('Admin access required')) {
+      console.warn('[getDocs] Admin access required, returning empty results');
     } else {
       console.warn('[getDocs] Error:', err?.message);
     }
@@ -422,10 +449,31 @@ export const getDocs = async (q: any) => {
 
 export const onSnapshot = (q: any, callback: any) => {
   let alive = true;
-  const pull = () => {
+  let consecutiveFailures = 0;
+  const MAX_FAILURES_BEFORE_STOP = 3;
+
+  const pull = async () => {
     if (!alive) return;
-    getDocs(q).then(r => callback(r));
+    try {
+      const r = await getDocs(q);
+      consecutiveFailures = 0;
+      callback(r);
+    } catch (err: any) {
+      if (err?.message?.includes('401') || err?.message?.includes('Missing authorization')) {
+        consecutiveFailures++;
+        console.warn(`[onSnapshot] Auth error (${consecutiveFailures}/${MAX_FAILURES_BEFORE_STOP}), waiting...`);
+        if (consecutiveFailures >= MAX_FAILURES_BEFORE_STOP) {
+          console.warn('[onSnapshot] Stopping poll due to auth failures');
+          alive = false;
+          if (typeof window !== 'undefined') window.clearInterval(poll);
+        }
+      } else {
+        consecutiveFailures = 0;
+        callback({ docs: [], empty: true, size: 0 });
+      }
+    }
   };
+
   pull();
   const pollMs = 10_000;
   const poll = typeof window !== 'undefined' ? window.setInterval(pull, pollMs) : 0;

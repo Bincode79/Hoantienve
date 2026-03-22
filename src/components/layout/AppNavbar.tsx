@@ -76,7 +76,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
                 onClick={() => setActiveTab('dashboard')}
                 className={cn("h-[42px] px-4 flex items-center hover:bg-[#0d2e66] transition-colors border-r border-[#1a4a9c]", activeTab === 'dashboard' && "bg-[#0d2e66] text-amber-400")}
               >
-                <TicketCheck size={14} className="mr-1.5" /> Quản lý hoàn vé
+                <TicketCheck size={14} className="mr-1.5" /> Hoàn Tiền
               </button>
             )}
             <button
@@ -103,7 +103,7 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
           <div className="hidden sm:flex h-full items-center border-x border-[#1a4a9c]">
             <div className="px-3 flex items-center gap-2 text-amber-300">
               <UserIcon size={14} />
-              <span className="text-amber-100 font-semibold max-w-[80px] md:max-w-[120px] truncate">{displayName}</span>
+              <span className="text-amber-100 font-semibold max-w-[160px] lg:max-w-[200px] truncate">{displayName}</span>
             </div>
           </div>
           <button onClick={signOut} className="hidden sm:flex h-full px-4 hover:bg-red-700 bg-red-600 transition-colors items-center text-white gap-1.5 font-black uppercase text-[12px]">

@@ -40,6 +40,20 @@ export default function App() {
     isLoading: dataLoading
   } = useDashboardData(profile);
   const { success, error } = useToast();
+  
+  // Wait for auth state to be ready before loading dashboard data
+  const [authReady, setAuthReady] = useState(false);
+  
+  useEffect(() => {
+    // Wait for either no user (not logged in) or profile is loaded
+    if (!loading && (user === null || profile !== null)) {
+      // Small delay to ensure token is properly stored
+      const timer = setTimeout(() => setAuthReady(true), 100);
+      return () => clearTimeout(timer);
+    } else {
+      setAuthReady(false);
+    }
+  }, [loading, user, profile]);
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'requests' | 'settings' | 'audit' | 'bookings'>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
@@ -77,7 +91,14 @@ export default function App() {
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const refreshDbStats = useCallback(async () => {
-    const collections = ['users', 'refundRequests', 'basedata', 'chats', 'adminAuditLog'];
+    // Skip if no auth token
+    const token = localStorage.getItem('aerorefund-auth-token');
+    if (!token) return;
+
+    const collections = ['refundRequests', 'basedata', 'chats'];
+    if (profile?.role === 'admin') {
+      collections.push('users', 'adminAuditLog');
+    }
     const newStats: Record<string, number> = {};
     
     for (const col of collections) {
@@ -100,11 +121,14 @@ export default function App() {
         setConfig(snapshot.docs[0].data());
       }
     } catch { }
-  }, []);
+  }, [profile]);
 
   useEffect(() => {
-    refreshDbStats();
-  }, [profile, allRequests, users, refreshDbStats]);
+    const token = localStorage.getItem('aerorefund-auth-token');
+    if (authReady && profile && token) {
+      refreshDbStats();
+    }
+  }, [profile, authReady, allRequests, users, refreshDbStats]);
 
   const handleResetCollection = async (type: string) => {
     if (type === 'all') {

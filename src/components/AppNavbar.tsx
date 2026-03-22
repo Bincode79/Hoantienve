@@ -24,13 +24,13 @@ interface AppNavbarProps {
 const adminTabs: { key: TabType; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
   { key: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
   { key: 'users', label: 'Người dùng', icon: Users },
-  { key: 'requests', label: 'Quản lý hoàn vé', icon: TicketCheck },
+  { key: 'requests', label: 'Hoàn Tiền', icon: TicketCheck },
   { key: 'audit', label: 'Nhật ký hệ thống', icon: ShieldCheck },
   { key: 'bookings', label: 'Dữ liệu PNR', icon: Database },
 ];
 
 const userTabs: { key: TabType; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-  { key: 'dashboard', label: 'Yêu cầu hoàn vé', icon: TicketCheck },
+  { key: 'dashboard', label: 'Yêu cầu hoàn tiền', icon: TicketCheck },
 ];
 
 export const AppNavbar: React.FC<AppNavbarProps> = ({

@@ -47,7 +47,7 @@ export const RefundRequestForm: React.FC<RefundRequestFormProps> = ({ onClose, p
         orderCode: formData.orderCode,
         refundReason: formData.refundReason,
         status: 'pending',
-        isVisible: false,
+        isVisible: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -74,19 +74,19 @@ export const RefundRequestForm: React.FC<RefundRequestFormProps> = ({ onClose, p
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-[calc(100%-2rem)] sm:w-full max-w-lg sm:max-w-xl lg:max-w-2xl glass-card shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[92vh]"
+        className="relative w-[calc(100%-2rem)] sm:w-full max-w-lg sm:max-w-xl lg:max-w-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[92vh]"
       >
-        <div className="p-3 sm:p-5 border-b border-border-subtle flex items-start sm:items-center justify-between bg-page/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="p-3 sm:p-5 border-b border-blue-200 flex items-start sm:items-center justify-between bg-gradient-to-r from-[#113C85] to-[#1a4a9c]/90 backdrop-blur-sm sticky top-0 z-10">
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 text-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-500 text-white rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
               <RotateCcw size={16} className="sm:w-5 sm:h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-2xl font-black bg-gradient-to-r from-primary-600 to-indigo-600 bg-clip-text text-transparent truncate">Hoàn vé máy bay</h3>
-              <p className="text-[10px] sm:text-sm text-muted font-medium truncate">Điền thông tin yêu cầu hoàn vé</p>
+              <h3 className="text-base sm:text-2xl font-black text-white truncate">Hoàn Tiền</h3>
+              <p className="text-[10px] sm:text-sm text-blue-200 font-medium truncate">Điền thông tin yêu cầu hoàn tiền</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 -mr-2 rounded-lg text-muted hover:text-main hover:bg-primary/5 transition-all"><X size={20} /></button>
+          <button onClick={onClose} className="p-2 -mr-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           {error && (

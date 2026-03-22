@@ -27,7 +27,7 @@ export const GreetingBanner: React.FC<GreetingBannerProps> = ({
             {new Intl.DateTimeFormat('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(currentTime)}
           </span>
           <span className="hidden sm:inline text-gray-300">|</span>
-          <span className="text-red-500 font-bold">Xin chào, {displayName} ({isAdmin ? 'Q.Trị' : 'Đại lý'})</span>
+          <span className="text-red-500 font-bold">Xin chào, {displayName}</span>
         </div>
         <div className="flex items-center gap-4">
            <NotificationBell unreadCount={notificationCount} onClick={() => { }} />

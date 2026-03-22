@@ -43,9 +43,9 @@ export const Badge = memo(({ status }: { status: RefundStatus | 'active' | 'inac
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className={cn('px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border status-badge inline-flex items-center gap-1.5 shadow-sm', styles[status as keyof typeof styles])}
+      className={cn('px-0.5 py-0 rounded text-[6px] font-bold uppercase tracking-wider border status-badge inline-flex items-center gap-0.5 shadow-sm', styles[status as keyof typeof styles])}
     >
-      <span className="w-1 h-1 rounded-full bg-current opacity-80" />
+      <span className="w-0.5 h-0.5 rounded-full bg-current opacity-80" />
       {labels[status as keyof typeof labels] || status}
     </motion.span>
   );

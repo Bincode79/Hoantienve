@@ -40,33 +40,48 @@ export const useAuth = () => {
         setUser(firebaseUser);
         setLoading(false);
         
-        const profileRef = doc(db, 'users', firebaseUser.uid);
-        const profileSnap = await getDoc(profileRef);
+        try {
+          const profileRef = doc(db, 'users', firebaseUser.uid);
+          const profileSnap = await getDoc(profileRef);
 
-        if (profileSnap.exists()) {
-          setProfile(profileSnap.data() as UserProfile);
-        } else {
-          // Fallback if profile doesn't exist yet
+          if (profileSnap.exists()) {
+            setProfile(profileSnap.data() as UserProfile);
+          } else {
+            const formattedPhone = firebaseUser.sdt || firebaseUser.id || '';
+            const newProfile = {
+              uid: firebaseUser.uid || firebaseUser.id,
+              sdt: formattedPhone,
+              displayName: firebaseUser.displayName || 'Người dùng mới',
+              email: firebaseUser.email || undefined,
+              role: isAdminPhone(formattedPhone) ? 'admin' : 'user',
+              status: 'active',
+              createdAt: serverTimestamp(),
+            };
+            await setDoc(profileRef, newProfile, { merge: true });
+            setProfile(newProfile as UserProfile);
+          }
+          if (profileSnap.exists()) {
+            const firestoreProfile = profileSnap.data() as UserProfile;
+            if (firestoreProfile.displayName && firebaseUser.displayName !== firestoreProfile.displayName) {
+              const updatedMockUser = { ...firebaseUser, displayName: firestoreProfile.displayName };
+              localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
+            }
+          }
+        } catch (profileError) {
+          console.warn('[useAuth] Profile fetch error, using fallback:', profileError);
+          // User không tồn tại trong DB - xóa auth data cũ
+          localStorage.removeItem('auth_user');
+          localStorage.removeItem('aerorefund-auth-token');
           const formattedPhone = firebaseUser.sdt || firebaseUser.id || '';
-          const newProfile = {
+          const fallbackProfile = {
             uid: firebaseUser.uid || firebaseUser.id,
             sdt: formattedPhone,
-            displayName: firebaseUser.displayName || 'Người dùng mới',
+            displayName: firebaseUser.displayName || 'Người dùng',
             email: firebaseUser.email || undefined,
             role: isAdminPhone(formattedPhone) ? 'admin' : 'user',
             status: 'active',
-            createdAt: serverTimestamp(),
           };
-          await setDoc(profileRef, newProfile, { merge: true });
-          setProfile(newProfile as UserProfile);
-        }
-        // Cập nhật mockUser localStorage với displayName từ Firestore profile
-        if (profileSnap.exists()) {
-          const firestoreProfile = profileSnap.data() as UserProfile;
-          if (firestoreProfile.displayName && firebaseUser.displayName !== firestoreProfile.displayName) {
-            const updatedMockUser = { ...firebaseUser, displayName: firestoreProfile.displayName };
-            localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
-          }
+          setProfile(fallbackProfile as UserProfile);
         }
       } else {
         setUser(null);
@@ -104,19 +119,21 @@ export const useAuth = () => {
         throw new Error('Authentication failed: No user returned');
       }
 
-      // Lấy profile từ Firestore ngay lập tức để đồng bộ displayName
       const profileRef = doc(db, 'users', result.user.uid);
-      const profileSnap = await getDoc(profileRef);
       let finalDisplayName = result.user.displayName;
       
-      if (profileSnap.exists()) {
-        const pf = profileSnap.data();
-        if (pf.displayName) {
-          finalDisplayName = pf.displayName;
-          // Đồng bộ ngược vào mockUser để onAuthStateChanged đọc đúng
-          const updatedMockUser = { ...result.user, displayName: finalDisplayName };
-          localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
+      try {
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          const pf = profileSnap.data();
+          if (pf.displayName) {
+            finalDisplayName = pf.displayName;
+            const updatedMockUser = { ...result.user, displayName: finalDisplayName };
+            localStorage.setItem('auth_user', JSON.stringify(updatedMockUser));
+          }
         }
+      } catch (profileError) {
+        console.warn('[useAuth] Profile fetch after login error, using fallback:', profileError);
       }
 
       setUser({ ...result.user, displayName: finalDisplayName });

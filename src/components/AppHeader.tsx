@@ -25,7 +25,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ isAdmin, config }) => {
             </h1>
           </div>
           <p className="text-[9px] sm:text-[10px] md:text-xs text-primary-500 font-bold tracking-widest mt-0.5 uppercase opacity-80">
-            HỆ THỐNG {isAdmin ? 'QUẢN TRỊ' : 'ĐẠI LÝ'} HÀNG KHÔNG
+            HỆ THỐNG {isAdmin ? 'QUẢN TRỊ' : 'ĐẠI LÝ'} VIỆT NAM
           </p>
         </div>
         

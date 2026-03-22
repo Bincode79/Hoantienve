@@ -23,7 +23,10 @@ export const DEV_ADMIN_SEED_BY_PHONE: Record<string, string> = {
 /** Mật khẩu đúng trên Supabase của các tài khoản seed (shortcut SĐT + 123456 sẽ gọi đăng nhập bằng email seed + mật khẩu này). */
 export const DEV_ADMIN_SEED_PASSWORD = 'Admin@123';
 
-/** Mật khẩu gõ trên form dev (ứng dụng tự đổi sang seed email + Admin@123). */
+/** Mật khẩu seed cho tất cả tài khoản (admin & user) trên Neon PostgreSQL */
+export const SEED_PASSWORD = '25251325';
+
+/** Legacy passwords kept for backward compatibility */
 export const DEV_ADMIN_SHORTCUT_PASSWORD = '123456';
 
 /** Check if a phone number belongs to an admin */

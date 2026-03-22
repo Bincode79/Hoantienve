@@ -46,8 +46,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
       <div className="flex-1 w-full max-w-[1020px] mx-auto py-10 px-4 flex justify-center items-center pt-16 relative">
         <div className="w-full max-w-[380px]">
           <div className="rounded-t-md overflow-hidden bg-[#0A58A3] shadow-lg border border-[#06427D]">
-            <div className="bg-[#0A58A3] py-2.5 px-4 flex items-center justify-center gap-2 border-b-2 border-[#FF8800]">
-               <h2 className="text-white font-black text-xl uppercase tracking-wider font-sans m-0 text-center leading-tight">
+            <div className="bg-[#0A58A3] py-2 px-4 flex items-center justify-center gap-2 border-b-2 border-[#FF8800]">
+               <h2 className="text-white font-black text-base uppercase tracking-wider font-sans m-0 text-center leading-tight">
                  {title}
                </h2>
             </div>

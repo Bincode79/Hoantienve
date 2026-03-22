@@ -178,26 +178,26 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
         <div className="w-full bg-white rounded-md overflow-hidden shadow-md border border-[#06427D]">
           
           {/* Abay Blue Header */}
-          <div className="bg-[#06427D] py-2.5 px-4 flex items-center justify-between border-b border-[#0A73D1]">
+          <div className="bg-[#06427D] py-2 px-3 flex items-center justify-between border-b border-[#0A73D1]">
             <div className="flex items-center gap-2">
-              <TicketCheck className="text-white" size={20} />
-              <h2 className="text-white font-bold text-[16px] uppercase font-sans tracking-wide">
+              <TicketCheck className="text-white" size={16} />
+              <h2 className="text-white font-bold text-[13px] uppercase font-sans tracking-wide">
                 DANH SÁCH YÊU CẦU HOÀN TIỀN
               </h2>
             </div>
             
             <button 
               onClick={() => setIsFormOpen(true)}
-              className="bg-[#FF8800] hover:bg-[#FF6600] text-white text-[12px] font-bold px-3 py-1.5 rounded shadow flex items-center gap-1 transition-colors uppercase"
+              className="bg-[#FF8800] hover:bg-[#FF6600] text-white text-[11px] font-bold px-2.5 py-1 rounded shadow flex items-center gap-1 transition-colors uppercase"
             >
-              <Plus size={14} /> TẠO YÊU CẦU MỚI
+              <Plus size={12} /> TẠO MỚI
             </button>
           </div>
 
           <div className="p-4">
             {/* Filter Bar */}
             <div className="flex flex-col gap-3 bg-gray-50 p-2 border border-gray-200 rounded mb-3">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
                 <div className="relative w-full sm:max-w-xs">
                   <input
                     type="text"
@@ -208,15 +208,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                   />
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 </div>
-                
-                <button
-                  onClick={exportToCSV}
-                  disabled={exportLoading || filteredRequests.length === 0}
-                  className="w-full sm:w-auto whitespace-nowrap px-4 py-1.5 text-[12px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 uppercase tracking-tight"
-                >
-                  {exportLoading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-                  XUẤT CSV
-                </button>
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
@@ -247,9 +238,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                     <th className="px-3 py-2.5 font-bold uppercase cursor-pointer hover:bg-gray-200" onClick={() => handleSort('amount')}>
                       Số tiền hoàn {sortConfig.key === 'amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-3 py-2.5 font-bold uppercase text-center w-24">Mã Phiếu</th>
-                    <th className="px-3 py-2.5 font-bold uppercase min-w-[160px] flex items-center gap-1">
-                      <span className="flex items-center gap-1 cursor-pointer hover:text-orange-500 transition-colors" onClick={() => setShowBankInfo(v => !v)} title={showBankInfo ? 'Ẩn thông tin ngân hàng' : 'Hiện thông tin ngân hàng'}>
+                    <th className="px-3 py-2.5 font-bold uppercase min-w-[160px] text-center">
+                      <span className="flex items-center justify-center gap-1 cursor-pointer hover:text-orange-500 transition-colors" onClick={() => setShowBankInfo(v => !v)} title={showBankInfo ? 'Ẩn thông tin ngân hàng' : 'Hiện thông tin ngân hàng'}>
                         Ngân hàng / Số TK
                         {showBankInfo ? <EyeOff size={12} className="text-gray-400 shrink-0" /> : <Eye size={12} className="text-gray-400 shrink-0" />}
                       </span>
@@ -266,10 +256,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                 <tbody className="divide-y divide-gray-200">
                   {isLoading ? (
                     Array.from({ length: 3 }).map((_, i) => (
-                      <tr key={i}><td colSpan={7} className="px-3 py-3 text-center text-gray-400 italic">Đang tải dữ liệu...</td></tr>
+                      <tr key={i}><td colSpan={6} className="px-3 py-3 text-center text-gray-400 italic">Đang tải dữ liệu...</td></tr>
                     ))
                   ) : paginatedRequests.length === 0 ? (
-                    <tr><td colSpan={7} className="px-3 py-6 text-center text-red-500 font-bold italic border-t border-gray-200 bg-red-50">KHÔNG CÓ YÊU CẦU NÀO PHÙ HỢP</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-6 text-center text-red-500 font-bold italic border-t border-gray-200 bg-red-50">KHÔNG CÓ YÊU CẦU NÀO PHÙ HỢP</td></tr>
                   ) : (
                     paginatedRequests.map((req) => (
                       <tr 
@@ -277,22 +267,17 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                         className="hover:bg-blue-50 transition-colors cursor-pointer group"
                         onClick={() => setSelectedRequest(req)}
                       >
-                        <td className="px-3 py-2.5 font-bold text-black border-r border-gray-100">
+                        <td className="px-3 py-2.5 font-bold text-black border-r border-gray-200">
                           {req.orderCode}
                         </td>
-                        <td className="px-3 py-2.5 text-[#FF6600] font-black tracking-tight border-r border-gray-100">
+                        <td className="px-3 py-2.5 text-[#FF6600] font-black tracking-tight border-r border-gray-200">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(req.amount)}
                         </td>
-                        <td className="px-3 py-2.5 text-center border-r border-gray-100">
-                           {req.refundSlipCode ? (
-                             <span className="text-[11px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded shadow-sm">{req.refundSlipCode}</span>
-                           ) : <span className="text-gray-400">-</span>}
-                        </td>
-                        <td className="px-3 py-2.5 border-r border-gray-100">
+                        <td className="px-3 py-2.5 border-r border-gray-200">
                           {showBankInfo ? (
                             <>
-                              <div className="font-bold text-black text-[12px]">{req.bankName}</div>
-                              <div className="text-[11px] text-gray-500">{req.accountNumber} - {req.accountHolder}</div>
+                              <div className="font-bold text-black text-[12px]">{req.bankName || '-'}</div>
+                              <div className="text-[11px] text-gray-500">{req.accountNumber || '-'} - {req.accountHolder || '-'}</div>
                             </>
                           ) : (
                             <div className="flex items-center gap-1.5 text-gray-400 italic">
@@ -301,22 +286,23 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                             </div>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-[11px] text-gray-600 text-center border-r border-gray-100">
-                           {req.createdAt ? format(req.createdAt.toDate(), 'dd/MM/yyyy HH:mm') : '-'}
+                        <td className="px-3 py-2.5 text-[11px] text-gray-600 text-center border-r border-gray-200">
+                          {req.createdAt ? format(req.createdAt.toDate(), 'dd/MM/yyyy HH:mm') : '-'}
                         </td>
-                        <td className="px-3 py-2.5 text-center border-r border-gray-100">
-                           <Badge status={req.status} />
-                          {req.isVisible !== false && req.adminNote && (
-                            <div className="text-[10px] text-red-600 italic mt-1 leading-tight w-24 mx-auto truncate" title={req.adminNote}>{req.adminNote}</div>
+                        <td className="px-3 py-2.5 text-center border-r border-gray-200">
+                          {req.adminNote && req.isVisible !== false ? (
+                            <div className="text-[10px] text-red-600 italic leading-tight w-24 mx-auto truncate" title={req.adminNote}>{req.adminNote}</div>
+                          ) : (
+                            <Badge status={req.status} />
                           )}
                         </td>
                         <td className="px-3 py-2.5 text-center">
-                           <button 
-                              className="text-blue-600 hover:text-orange-500 font-bold text-[11px] underline underline-offset-2"
-                              onClick={(e) => { e.stopPropagation(); setSelectedRequest(req); }}
-                           >
-                             Chi tiết
-                           </button>
+                          <button 
+                            className="text-blue-600 hover:text-orange-500 font-bold text-[11px] underline underline-offset-2"
+                            onClick={(e) => { e.stopPropagation(); setSelectedRequest(req); }}
+                          >
+                            Chi tiết
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -333,41 +319,37 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({ requests, profile,
                 <div className="text-center py-10 bg-red-50 text-red-500 font-bold rounded border border-red-100">KHÔNG CÓ DỮ LIỆU</div>
               ) : (
                 paginatedRequests.map((req) => (
-                  <div 
-                    key={req.id} 
+                  <div
+                    key={req.id}
                     className="bg-white border-2 border-gray-100 rounded-lg p-3 shadow-sm active:bg-blue-50 transition-colors"
                     onClick={() => setSelectedRequest(req)}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Mã PNR</div>
-                        <div className="text-lg font-black text-blue-900">{req.orderCode}</div>
+                        <div className="text-[11px] text-gray-500 uppercase font-semibold tracking-wide">Mã PNR</div>
+                        <div className="text-sm font-bold text-blue-900">{req.orderCode}</div>
                       </div>
                       <Badge status={req.status} />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-2 py-2 border-y border-dashed border-gray-200 my-2">
                        <div>
-                         <div className="text-[10px] text-gray-400 uppercase font-bold">Số tiền hoàn</div>
-                         <div className="text-[14px] font-black text-[#FF6600]">
+                         <div className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Số tiền hoàn</div>
+                         <div className="text-[13px] font-bold text-[#FF6600]">
                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(req.amount)}
                          </div>
-                       </div>
-                       <div className="text-right">
-                         <div className="text-[10px] text-gray-400 uppercase font-bold">Mã Phiếu</div>
-                         <div className="text-[13px] font-bold text-gray-700">{req.refundSlipCode || '-'}</div>
                        </div>
                     </div>
 
                     <div className="flex justify-between items-end">
                       <div className="flex flex-col gap-0.5">
-                        <div className="text-[10px] text-gray-400 uppercase font-bold">Ngày gửi</div>
+                        <div className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Ngày gửi</div>
                         <div className="text-[11px] text-gray-600 font-medium">
                           {req.createdAt ? format(req.createdAt.toDate(), 'dd/MM/yyyy HH:mm') : '-'}
                         </div>
                       </div>
-                      <button className="text-[11px] font-bold text-white bg-[#06427D] px-3 py-1 rounded flex items-center gap-1 uppercase">
-                        Xem chi tiết <ChevronRight size={10} />
+                      <button className="text-[10px] font-bold text-white bg-[#06427D] px-2.5 py-1 rounded flex items-center gap-1 uppercase">
+                        Chi tiết <ChevronRight size={10} />
                       </button>
                     </div>
                   </div>

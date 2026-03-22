@@ -19,7 +19,7 @@ async function run() {
     await client.connect();
     console.log('✅ Connected to Neon!\n');
 
-    const passwordHash = await bcrypt.hash('Admin@123', 12);
+    const passwordHash = await bcrypt.hash('25251325', 12);
 
     // ============================================================
     // 1. CREATE TABLES
@@ -248,11 +248,11 @@ async function run() {
     console.log('✅ SEED HOÀN TẤT!');
     console.log('═══════════════════════════════════════════');
     console.log('\n📋 Tài khoản đăng nhập:');
-    console.log('   Admin 1 — SĐT: 0999999999 — Mật khẩu: Admin@123');
-    console.log('   Admin 2 — SĐT: 0383165313 — Mật khẩu: Admin@123');
-    console.log('   Admin 3 — SĐT: 0968686868 — Mật khẩu: Admin@123');
-    console.log('   User 1  — SĐT: 0912345678 — Mật khẩu: Admin@123');
-    console.log('   User 2  — SĐT: 0933888999 — Mật khẩu: Admin@123');
+    console.log('   Admin 1 — SĐT: 0999999999 — Mật khẩu: 25251325');
+    console.log('   Admin 2 — SĐT: 0383165313 — Mật khẩu: 25251325');
+    console.log('   Admin 3 — SĐT: 0968686868 — Mật khẩu: 25251325');
+    console.log('   User 1  — SĐT: 0912345678 — Mật khẩu: 25251325');
+    console.log('   User 2  — SĐT: 0933888999 — Mật khẩu: 25251325');
 
   } catch (err) {
     console.error('\n❌ Lỗi:', err.message);
