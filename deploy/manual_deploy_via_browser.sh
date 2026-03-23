@@ -67,13 +67,14 @@ rm -rf ${REMOTE_DIR}/frontend/*
 cp -r dist/* ${REMOTE_DIR}/frontend/
 chmod -R 755 ${REMOTE_DIR}/frontend
 
-# 8. Cấu hình PM2 ecosystem
-cat > ecosystem.config.js << 'PM2EOF'
-export default {
+# 8. Cấu hình PM2 ecosystem (CommonJS - tương thích PM2)
+cat > ecosystem.config.cjs << 'PM2EOF'
+module.exports = {
   apps: [{
     name: 'hoantienve-api',
-    script: 'tsx',
-    args: 'server.ts',
+    script: 'server.ts',
+    interpreter: 'npx',
+    interpreter_args: 'tsx',
     cwd: '/var/www/hoantienve/source',
     instances: 1,
     autorestart: true,
@@ -127,7 +128,7 @@ nginx -t && systemctl reload nginx
 # 10. Khởi động PM2
 pm2 delete hoantienve-api 2>/dev/null || true
 cd /var/www/hoantienve/source
-pm2 start ecosystem.config.js --env production
+pm2 start ecosystem.config.cjs --env production
 pm2 save
 pm2 startup 2>/dev/null || true
 
