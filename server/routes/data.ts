@@ -212,6 +212,23 @@ router.get('/audit-logs', requireAuth, requireAdmin, async (_req: AuthenticatedR
   }
 });
 
+// ── POST /api/data/audit-logs ─────────────────────────────────────────────
+router.post('/audit-logs', requireAuth, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  const { admin_id, admin_email, action, target_id, target_type, changes } = req.body ?? {};
+  try {
+    const result = await db.query(
+      `INSERT INTO public.audit_logs (admin_id, admin_email, action, target_id, target_type, changes)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id`,
+      [admin_id, admin_email, action, target_id, target_type, JSON.stringify(changes)],
+    );
+    return res.status(201).json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error('[Data] Audit log create error:', err);
+    return res.status(500).json({ error: 'Lỗi server.' });
+  }
+});
+
 // ── GET /api/data/chats ─────────────────────────────────────────────────
 // User: own chats. Admin: all chats.
 router.get('/chats', requireAuth, async (req: AuthenticatedRequest, res: Response) => {

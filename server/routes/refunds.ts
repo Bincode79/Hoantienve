@@ -182,6 +182,7 @@ router.patch('/:id', requireAuth, async (req: AuthenticatedRequest, res: Respons
       `SELECT status, user_id FROM public.refund_requests WHERE id = $1`,
       [id],
     );
+
     if (!existing.rows.length || existing.rows[0].user_id !== userId) {
       return res.status(403).json({ error: 'Bạn không có quyền cập nhật yêu cầu này.' });
     }

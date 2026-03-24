@@ -1,8 +1,0 @@
-Update auth system and API client for PostgreSQL backend
-
-- Refactor apiClient.ts to use Express API instead of Firebase
-- Update useAuth.ts for new authentication flow
-- Update LoginForm.tsx for phone-based login
-- Update CreateUserModal.tsx for admin user creation
-- Update server.ts with improved error handling
-- Add update_accounts.sql for account management

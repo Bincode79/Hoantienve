@@ -188,6 +188,7 @@ router.post('/', requireAuth, requireAdmin, async (req: AuthenticatedRequest, re
 
     const u = result.rows[0];
     return res.status(201).json({
+      id: u.id,
       user: {
         uid: u.id,
         sdt: u.sdt,
