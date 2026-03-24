@@ -3,7 +3,6 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readFileSync } from "fs";
-import admin from "firebase-admin";
 import cors from "cors";
 
 // Import custom routes
@@ -15,22 +14,6 @@ import { db } from "./server/db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Initialize Firebase Admin
-let serviceAccount = null;
-try {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  }
-} catch (error) {
-  console.error('[Startup] Failed to parse FIREBASE_SERVICE_ACCOUNT JSON. FCM will not work:', error);
-}
-
-if (serviceAccount) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
 
 if (process.env.GEMINI_API_KEY) {
   console.log("[Startup] ✅ Gemini AI features enabled");
@@ -115,31 +98,8 @@ async function startServer() {
     });
   });
 
-  // FCM notification endpoint
-  app.post("/api/notify", async (req, res) => {
-    const { token, title, body } = req.body;
-
-    if (!serviceAccount) {
-      return res.status(500).json({ error: "FCM not configured on server." });
-    }
-
-    if (!token) {
-      return res.status(400).json({ error: "No token provided." });
-    }
-
-    try {
-      const message = {
-        notification: { title, body },
-        token: token,
-      };
-
-      const response = await admin.messaging().send(message);
-      res.json({ success: true, response });
-    } catch (error) {
-      console.error("Error sending FCM notification:", error);
-      res.status(500).json({ error: "Failed to send notification." });
-    }
-  });
+  // FCM notification endpoint (disabled - using custom API instead)
+  // app.post("/api/notify", async (req, res) => { ... });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

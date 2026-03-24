@@ -1,11 +1,7 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * API Client for HoanTienVe Backend
+ * Provides unified auth and data access through Express API
  */
-
-// File: src/api/apiClient.ts
-// Provides a unified API client backed by the Express server API.
-// Replaces both Firebase and Supabase remnants.
 
 export const db = {};
 

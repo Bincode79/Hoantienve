@@ -1,33 +1,26 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * Authentication Hook
+ * Uses custom API client for auth operations
  */
 
 import { useState, useEffect } from 'react';
 import { UserProfile } from '../../types/index';
 import { formatPhone, getMockEmail } from '../../utils/index';
 import {
-  auth, db,
+  auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  updateProfile,
   onAuthStateChanged,
-  onSnapshot,
-  doc,
   getDoc,
   setDoc,
-  collection,
-  query,
-  where,
-  serverTimestamp,
-  FirebaseUser
+  doc,
 } from '../../api/apiClient';
 
 import { isAdminPhone } from '../../constants/admin';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +34,7 @@ export const useAuth = () => {
         setLoading(false);
         
         try {
-          const profileRef = doc(db, 'users', firebaseUser.uid);
+          const profileRef = doc(null, 'users', firebaseUser.uid);
           const profileSnap = await getDoc(profileRef);
 
           if (profileSnap.exists()) {
@@ -55,7 +48,6 @@ export const useAuth = () => {
               email: firebaseUser.email || undefined,
               role: isAdminPhone(formattedPhone) ? 'admin' : 'user',
               status: 'active',
-              createdAt: serverTimestamp(),
             };
             await setDoc(profileRef, newProfile, { merge: true });
             setProfile(newProfile as UserProfile);
@@ -69,9 +61,8 @@ export const useAuth = () => {
           }
         } catch (profileError) {
           console.warn('[useAuth] Profile fetch error, using fallback:', profileError);
-          // User không tồn tại trong DB - xóa auth data cũ
           localStorage.removeItem('auth_user');
-          localStorage.removeItem('aerorefund-auth-token');
+          localStorage.removeItem('hoanvemaybay-auth-token');
           const formattedPhone = firebaseUser.sdt || firebaseUser.id || '';
           const fallbackProfile = {
             uid: firebaseUser.uid || firebaseUser.id,
@@ -123,7 +114,7 @@ export const useAuth = () => {
         throw new Error('Không nhận được thông tin người dùng. Vui lòng thử đăng nhập lại.');
       }
 
-      const profileRef = doc(db, 'users', result.user.uid);
+      const profileRef = doc(null, 'users', result.user.uid);
       let finalDisplayName = result.user.displayName;
       
       try {

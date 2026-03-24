@@ -1,24 +1,12 @@
 -- ============================================================
--- INIT SCHEMA — AEROREFUND (Render PostgreSQL)
--- Tự động chạy khi khởi tạo database
+-- INIT SCHEMA — AEROREFUND (Neon PostgreSQL)
+-- Chỉ tạo bảng nếu chưa tồn tại (không xóa data)
 -- ============================================================
 
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 2. Xóa bảng cũ (nếu có)
-DROP TABLE IF EXISTS public.refund_requests CASCADE;
-DROP TABLE IF EXISTS public.basedata        CASCADE;
-DROP TABLE IF EXISTS public.chats           CASCADE;
-DROP TABLE IF EXISTS public.messages        CASCADE;
-DROP TABLE IF EXISTS public.audit_logs      CASCADE;
-DROP TABLE IF EXISTS public.config           CASCADE;
-DROP TABLE IF EXISTS public.airports        CASCADE;
-DROP TABLE IF EXISTS public.airlines         CASCADE;
-DROP TABLE IF EXISTS public.popular_routes   CASCADE;
-DROP TABLE IF EXISTS public.users            CASCADE;
-
--- 3. Function tự động update updated_at
+-- 2. Function tự động update updated_at (REPLACE để cập nhật nếu đã có)
 CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -30,7 +18,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================================
 -- USERS TABLE
 -- ============================================================
-CREATE TABLE public.users (
+CREATE TABLE IF NOT EXISTS public.users (
   id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   sdt            TEXT        UNIQUE,
   email          TEXT        UNIQUE NOT NULL,
@@ -45,6 +33,8 @@ CREATE TABLE public.users (
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Trigger (tạo lại nếu chưa có)
+DROP TRIGGER IF EXISTS users_updated_at ON public.users;
 CREATE TRIGGER users_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -52,7 +42,7 @@ CREATE TRIGGER users_updated_at
 -- ============================================================
 -- REFUND_REQUESTS TABLE
 -- ============================================================
-CREATE TABLE public.refund_requests (
+CREATE TABLE IF NOT EXISTS public.refund_requests (
   id               UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id          UUID        REFERENCES public.users(id) ON DELETE CASCADE,
   user_sdt         TEXT,
@@ -81,6 +71,7 @@ CREATE TABLE public.refund_requests (
   updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS refund_requests_updated_at ON public.refund_requests;
 CREATE TRIGGER refund_requests_updated_at
   BEFORE UPDATE ON public.refund_requests
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -88,7 +79,7 @@ CREATE TRIGGER refund_requests_updated_at
 -- ============================================================
 -- BASEDATA TABLE
 -- ============================================================
-CREATE TABLE public.basedata (
+CREATE TABLE IF NOT EXISTS public.basedata (
   id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   order_code     TEXT        UNIQUE,
   amount         NUMERIC,
@@ -100,6 +91,7 @@ CREATE TABLE public.basedata (
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS basedata_updated_at ON public.basedata;
 CREATE TRIGGER basedata_updated_at
   BEFORE UPDATE ON public.basedata
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -107,7 +99,7 @@ CREATE TRIGGER basedata_updated_at
 -- ============================================================
 -- AUDIT_LOGS TABLE
 -- ============================================================
-CREATE TABLE public.audit_logs (
+CREATE TABLE IF NOT EXISTS public.audit_logs (
   id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   admin_id     UUID       REFERENCES public.users(id) ON DELETE SET NULL,
   admin_email  TEXT,
@@ -119,9 +111,47 @@ CREATE TABLE public.audit_logs (
 );
 
 -- ============================================================
+-- CHATS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.chats (
+  id            TEXT        PRIMARY KEY,
+  user_id       UUID       REFERENCES public.users(id) ON DELETE CASCADE,
+  user_name     TEXT,
+  last_message  TEXT,
+  last_time     TIMESTAMPTZ,
+  unread_count  INTEGER     DEFAULT 0,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Recreate indexes (IF NOT EXISTS không cần thiết vì indexes đã có IF NOT EXISTS trong definition)
+DROP INDEX IF EXISTS idx_chats_user_id;
+CREATE INDEX idx_chats_user_id ON public.chats(user_id);
+DROP INDEX IF EXISTS idx_chats_last_time;
+CREATE INDEX idx_chats_last_time ON public.chats(last_time DESC NULLS LAST);
+
+-- ============================================================
+-- MESSAGES TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.messages (
+  id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  chat_id      TEXT        REFERENCES public.chats(id) ON DELETE CASCADE,
+  sender_id    UUID,
+  sender_name  TEXT,
+  sender_role  TEXT,
+  text         TEXT,
+  timestamp    TIMESTAMPTZ DEFAULT NOW(),
+  is_read      BOOLEAN     DEFAULT FALSE
+);
+
+DROP INDEX IF EXISTS idx_messages_chat_id;
+CREATE INDEX idx_messages_chat_id ON public.messages(chat_id);
+DROP INDEX IF EXISTS idx_messages_timestamp;
+CREATE INDEX idx_messages_timestamp ON public.messages(timestamp ASC);
+
+-- ============================================================
 -- CONFIG TABLE
 -- ============================================================
-CREATE TABLE public.config (
+CREATE TABLE IF NOT EXISTS public.config (
   id                   TEXT        PRIMARY KEY DEFAULT 'system',
   support_phone        TEXT,
   support_email        TEXT,
@@ -132,6 +162,7 @@ CREATE TABLE public.config (
   updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS config_updated_at ON public.config;
 CREATE TRIGGER config_updated_at
   BEFORE UPDATE ON public.config
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -139,7 +170,7 @@ CREATE TRIGGER config_updated_at
 -- ============================================================
 -- AIRPORTS TABLE
 -- ============================================================
-CREATE TABLE public.airports (
+CREATE TABLE IF NOT EXISTS public.airports (
   id           TEXT        PRIMARY KEY,
   iata         TEXT        UNIQUE NOT NULL,
   name         TEXT        NOT NULL,
@@ -152,7 +183,7 @@ CREATE TABLE public.airports (
 -- ============================================================
 -- AIRLINES TABLE
 -- ============================================================
-CREATE TABLE public.airlines (
+CREATE TABLE IF NOT EXISTS public.airlines (
   code     TEXT        PRIMARY KEY,
   name     TEXT        NOT NULL,
   name_vn  TEXT,
@@ -162,7 +193,7 @@ CREATE TABLE public.airlines (
 -- ============================================================
 -- POPULAR ROUTES TABLE
 -- ============================================================
-CREATE TABLE public.popular_routes (
+CREATE TABLE IF NOT EXISTS public.popular_routes (
   id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   from_iata   TEXT        REFERENCES public.airports(iata) NOT NULL,
   to_iata     TEXT        REFERENCES public.airports(iata) NOT NULL,

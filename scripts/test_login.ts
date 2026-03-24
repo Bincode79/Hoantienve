@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 async function testLogin() {
   console.log('Testing login API...\n');
 

@@ -241,7 +241,7 @@ router.get('/chats', requireAuth, async (req: AuthenticatedRequest, res: Respons
        FROM public.chats c
        LEFT JOIN public.users u ON u.id = c.user_id
        WHERE ${isAdmin ? 'TRUE' : 'c.user_id = $1'}
-       ORDER BY COALESCE(c.last_time, c.id) DESC`,
+       ORDER BY c.last_time DESC NULLS LAST, c.id DESC`,
       isAdmin ? [] : [userId],
     );
     const chats = result.rows.map((r) => ({
