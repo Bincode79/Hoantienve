@@ -114,7 +114,6 @@ export const useAuth = () => {
 
     try {
       const result = await signInWithEmailAndPassword(auth, loginIdentifier, pass) as any;
-      console.log('[useAuth] Login result:', JSON.stringify(result, null, 2));
 
       if (!result) {
         throw new Error('Không nhận được phản hồi từ máy chủ.');

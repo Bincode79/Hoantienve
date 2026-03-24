@@ -30,14 +30,9 @@ if (serviceAccount) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
-  console.log('[Startup] ✅ Firebase Admin initialized (FCM enabled)');
-} else {
-  console.warn("[Startup] ⚠️ FIREBASE_SERVICE_ACCOUNT not configured. FCM notifications will be disabled.");
 }
 
-if (!process.env.GEMINI_API_KEY) {
-  console.warn("[Startup] ⚠️ GEMINI_API_KEY not configured. AI features will be disabled.");
-} else {
+if (process.env.GEMINI_API_KEY) {
   console.log("[Startup] ✅ Gemini AI features enabled");
 }
 

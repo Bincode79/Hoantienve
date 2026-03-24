@@ -150,12 +150,12 @@ export function CreateUserModal({ onClose, adminProfile }: CreateUserModalProps)
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-semibold text-black">Email <span className="text-rose-500">*</span></label>
+            <label className="text-sm font-semibold text-black">Mã đặt chỗ <span className="text-rose-500">*</span></label>
             <input
               required
-              type="email"
+              type="text"
               className="w-full px-3.5 py-2.5 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 outline-none transition-all text-sm placeholder:text-gray-600"
-              placeholder="Địa chỉ email đăng nhập"
+              placeholder="Nhập mã đặt chỗ"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
             />

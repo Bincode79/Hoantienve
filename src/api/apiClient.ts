@@ -47,16 +47,10 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
     }
 
     if (!res.ok) {
-      console.error(`[API Error] ${options.method || 'GET'} ${fullPath} - Status: ${res.status}`, data);
       throw new Error(data?.error || `API Error: ${res.status}`);
     }
     return data;
   } catch (err) {
-    if (err instanceof Error) {
-      console.error(`[Network Error] ${options.method || 'GET'} ${fullPath}:`, err.message);
-    } else {
-      console.error(`[Unknown Error] ${options.method || 'GET'} ${fullPath}:`, err);
-    }
     throw err;
   }
 }
@@ -210,13 +204,23 @@ export const Timestamp = {
 
 const toSnake = (str: string) => str.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`);
 
+const CAMEL_CASE_FIELDS: Record<string, string[]> = {
+  users: ['displayName', 'phone', 'password', 'email', 'role', 'status'],
+};
+
 const toSnakeCase = (obj: any, table?: string) => {
   if (!obj || typeof obj !== 'object') return obj;
   const result: any = {};
+  const camelFields = table ? CAMEL_CASE_FIELDS[table] : null;
   for (const key in obj) {
-    let newKey = toSnake(key);
-    if (table === 'users' && key === 'uid') newKey = 'id';
-    result[newKey] = obj[key];
+    // Keep camelCase for known API fields
+    if (camelFields && camelFields.includes(key)) {
+      result[key] = obj[key];
+    } else {
+      let newKey = toSnake(key);
+      if (table === 'users' && key === 'uid') newKey = 'id';
+      result[newKey] = obj[key];
+    }
   }
   return result;
 };
@@ -253,6 +257,7 @@ const resolveTable = (path: string, ...segments: string[]) => {
   if (full === 'config') return 'data/config';
   if (full === 'basedata' || full.includes('basedata')) return 'data/basedata';
   if (full === 'audit_logs' || full.includes('audit_logs') || full === 'adminAuditLog') return 'data/audit-logs';
+  if (full === 'chats') return 'data/chats';
 
   if (full.startsWith('chats_')) {
     const parts = full.split('_');
@@ -381,7 +386,7 @@ export const getDocs = async (q: any) => {
       data = Array.isArray(candidate) ? candidate : (candidate ? [candidate] : []);
     }
   } catch (err: any) {
-    console.warn('[getDocs] Error:', err?.message);
+    // silent fallback for mock data errors
   }
 
   return {
