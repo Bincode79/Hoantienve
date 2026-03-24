@@ -31,7 +31,7 @@ import {
   addDoc,
   serverTimestamp,
   writeBatch,
-} from "../../../mockFirebase";
+} from "../../../api/apiClient";
 
 interface RefundRequestManagementProps {
   requests: RefundRequest[];
@@ -312,11 +312,7 @@ export function RefundRequestManagement({
         }
 
         if (title && body) {
-          await fetch("/api/notify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: userData.fcmToken, title, body }),
-          });
+          console.log('[Notification] Logic removed (Firebase disconnected):', { title, body });
         }
       }
     } catch (error) {

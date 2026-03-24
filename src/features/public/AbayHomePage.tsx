@@ -281,9 +281,9 @@ export const AbayHomePage: React.FC<AbayHomePageProps> = ({ onLoginClick }) => {
           </div>
           {/* Copyright */}
           <div className="text-right text-[9px] md:text-[10px] text-blue-200 mt-3 md:mt-4 leading-relaxed max-w-xs md:max-w-sm ml-auto opacity-70">
-            TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM<br/>
+            HOÀN VÉ MÁY BAY - hoanvemaybay.com<br/>
             Số ĐKKD 01xxxxxxx - Mã số thuế: 0105xxxxxx<br/>
-            © 2026 TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM. All Rights Reserved.
+            © 2026 hoanvemaybay.com. All Rights Reserved.
           </div>
         </div>
       </div>

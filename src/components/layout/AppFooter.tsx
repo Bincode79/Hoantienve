@@ -43,7 +43,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
               </div>
               <div className="flex items-center gap-2 text-[11px] text-blue-200">
                 <Mail size={12} className="text-amber-400 shrink-0" />
-                <span>{config?.supportEmail || 'hotro@aerorefund.com'}</span>
+                <span>{config?.supportEmail || 'hotro@hoanvemaybay.com'}</span>
               </div>
               <div className="flex items-center gap-2 text-[11px] text-blue-200">
                 <Clock size={12} className="text-amber-400 shrink-0" />
@@ -70,7 +70,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ config }) => {
         <div className="border-t border-blue-700 pt-3">
           <div className="flex flex-col md:flex-row justify-between items-center gap-2">
             <div className="text-[10px] text-blue-300 text-center md:text-left leading-relaxed">
-              {config?.copyright || '© 2026 365.vn — Hệ thống quản lý đại lý & hoàn vé tự động.'}<br/>
+              {config?.copyright || '© 2026 hoanvemaybay.com — Hệ thống quản lý đại lý & hoàn vé tự động.'}<br/>
               <span className="text-blue-400">Mọi hành vi sao chép, phát hành nội dung mà không có sự đồng ý đều bị nghiêm cấm.</span>
             </div>
             <div className="flex items-center gap-3">

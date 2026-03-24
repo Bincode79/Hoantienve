@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Pagination } from '../../../components/Pagination';
 import { EmptyState } from '../../../components/EmptyState';
+import { useToast } from '../../../components/Toast';
 import { cn } from '../../../utils';
 import { BookingCode } from '../../../types';
 import { 
@@ -24,7 +25,7 @@ import {
   query,
   where,
   getDocs
-} from '../../../mockFirebase';
+} from '../../../api/apiClient';
 
 interface AdminBookingManagementProps {
   codes: BookingCode[];
@@ -34,6 +35,7 @@ export function AdminBookingManagement({ codes }: AdminBookingManagementProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'valid' | 'refunded'>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { error: toastError } = useToast();
   const [editingCode, setEditingCode] = useState<BookingCode | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<BookingCode | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -154,7 +156,7 @@ export function AdminBookingManagement({ codes }: AdminBookingManagementProps) {
       setDeleteConfirm(null);
     } catch (error) {
       console.error('Delete booking code error:', error);
-      alert('Xóa thất bại. Vui lòng thử lại.');
+      toastError('Lỗi', 'Xóa thất bại. Vui lòng thử lại.');
     }
   };
 

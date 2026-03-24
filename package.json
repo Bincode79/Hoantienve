@@ -13,7 +13,6 @@
     "migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.99.3",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "bcryptjs": "^3.0.2",
@@ -22,7 +21,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
-    "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.546.0",

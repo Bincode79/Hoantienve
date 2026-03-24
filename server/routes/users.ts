@@ -18,7 +18,7 @@ router.get('/', requireAuth, requireAdmin, async (_req: AuthenticatedRequest, re
       status: string;
       created_at: string;
     }>(
-      `SELECT id, sdt, email, display_name, role, status, created_at
+      `SELECT id, sdt, email, display_name, role, created_at
        FROM public.users
        ORDER BY created_at DESC`,
     );
@@ -29,7 +29,6 @@ router.get('/', requireAuth, requireAdmin, async (_req: AuthenticatedRequest, re
       email: u.email,
       displayName: u.display_name,
       role: u.role,
-      status: u.status,
       createdAt: u.created_at,
     }));
 
@@ -61,7 +60,7 @@ router.get('/:uid', requireAuth, async (req: AuthenticatedRequest, res: Response
       status: string;
       created_at: string;
     }>(
-      `SELECT id, sdt, email, display_name, role, status, created_at
+      `SELECT id, sdt, email, display_name, role, created_at
        FROM public.users WHERE id = $1`,
       [uid],
     );
@@ -78,7 +77,6 @@ router.get('/:uid', requireAuth, async (req: AuthenticatedRequest, res: Response
         email: u.email,
         displayName: u.display_name,
         role: u.role,
-        status: u.status,
         createdAt: u.created_at,
       },
     });
@@ -98,11 +96,11 @@ router.patch('/:uid', requireAuth, async (req: AuthenticatedRequest, res: Respon
     return res.status(403).json({ error: 'Bạn không có quyền cập nhật hồ sơ này.' });
   }
 
-  const { displayName, sdt, status, role, password } = req.body ?? {};
+  const { displayName, sdt, role, password } = req.body ?? {};
 
-  // Chỉ admin có thể thay đổi role và status
-  if ((status !== undefined || role !== undefined) && !isAdmin) {
-    return res.status(403).json({ error: 'Chỉ admin mới có quyền thay đổi vai trò hoặc trạng thái.' });
+  // Chỉ admin có thể thay đổi role
+  if (role !== undefined && !isAdmin) {
+    return res.status(403).json({ error: 'Chỉ admin mới có quyền thay đổi vai trò.' });
   }
 
   try {
@@ -117,10 +115,6 @@ router.patch('/:uid', requireAuth, async (req: AuthenticatedRequest, res: Respon
     if (sdt !== undefined) {
       updates.push(`sdt = $${idx++}`);
       values.push(sdt.trim());
-    }
-    if (status !== undefined && isAdmin) {
-      updates.push(`status = $${idx++}`);
-      values.push(status);
     }
     if (role !== undefined && isAdmin) {
       updates.push(`role = $${idx++}`);
@@ -159,7 +153,7 @@ router.patch('/:uid', requireAuth, async (req: AuthenticatedRequest, res: Respon
 
 // ── POST /api/users (Admin: tạo user mới) ──────────────────────────────────
 router.post('/', requireAuth, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
-  const { displayName, phone, password, email, role = 'user', status = 'active' } = req.body ?? {};
+  const { displayName, phone, password, email, role = 'user' } = req.body ?? {};
 
   if (!displayName?.trim() || !phone?.trim() || !password) {
     return res.status(400).json({ error: 'displayName, phone và password là bắt buộc.' });
@@ -184,13 +178,12 @@ router.post('/', requireAuth, requireAdmin, async (req: AuthenticatedRequest, re
       email: string;
       display_name: string;
       role: string;
-      status: string;
       created_at: string;
     }>(
-      `INSERT INTO public.users (id, sdt, email, password_hash, display_name, role, status)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
-       RETURNING id, sdt, email, display_name, role, status, created_at`,
-      [formattedPhone, userEmail, hash, displayName.trim(), role, status],
+      `INSERT INTO public.users (id, sdt, email, password_hash, display_name, role)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)
+       RETURNING id, sdt, email, display_name, role, created_at`,
+      [formattedPhone, userEmail, hash, displayName.trim(), role],
     );
 
     const u = result.rows[0];
@@ -201,7 +194,6 @@ router.post('/', requireAuth, requireAdmin, async (req: AuthenticatedRequest, re
         email: u.email,
         displayName: u.display_name,
         role: u.role,
-        status: u.status,
         createdAt: u.created_at,
       },
     });

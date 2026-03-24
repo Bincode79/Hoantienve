@@ -13,13 +13,16 @@ async function seedAdminAccounts() {
   console.log('🔄 Đang tạo tài khoản admin...');
   
   const adminPassword = 'Admin@123';
-  // Bcrypt hash cho 'Admin@123' với cost 12
-  const passwordHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4bKHJyOs/ztKPF3.';
+  // Bcrypt hash for 'Admin@123' (cost 12)
+  const passwordHash = '$2b$12$1HHbEdTN4GBES95ezdtKi.FCQKVuf1k5eV3xVw6eFTjiVomYD0vOO';
   
   const adminAccounts = [
-    { sdt: '0999999999', email: 'admin@app.aerorefund.local', display_name: 'Admin Hệ thống' },
-    { sdt: '0383165313', email: 'admin2@app.aerorefund.local', display_name: 'Admin 2' },
-    { sdt: '0968686868', email: 'admin3@app.aerorefund.local', display_name: 'Admin 3' },
+    { sdt: '0999999999', email: 'admin@app.aerorefund.local', display_name: 'Nguyễn Văn Minh' },
+    { sdt: '0383165313', email: 'admin2@app.aerorefund.local', display_name: 'Trần Thị Lan' },
+    { sdt: '0968686868', email: 'admin3@app.aerorefund.local', display_name: 'Lê Hoàng Nam' },
+    { sdt: '0912345678', email: 'admin4@app.aerorefund.local', display_name: 'Phạm Văn Đức' },
+    { sdt: '0977777777', email: 'admin5@app.aerorefund.local', display_name: 'Ngô Thị Hương' },
+    { sdt: '0988888888', email: 'admin6@app.aerorefund.local', display_name: 'Đặng Minh Tuấn' },
   ];
   
   try {

@@ -85,6 +85,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error,
             {isLoading ? <><Loader2 size={15} className="animate-spin" /> VUI LÒNG ĐỢI...</> : 'ĐĂNG NHẬP VÀO HỆ THỐNG'}
           </button>
         </div>
+
+        {/* Demo Accounts Panel */}
+        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-sm">
+          <p className="text-[12px] font-bold text-gray-600 mb-2 uppercase text-center">Tài khoản mặc định (Demo)</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPhoneNumber('0999999999');
+                setPassword('Admin@123'); 
+              }}
+              className="px-2 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200 text-[12px] font-bold rounded-sm transition-colors cursor-pointer"
+            >
+              Admin Demo
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPhoneNumber('0901001001'); 
+                setPassword('User@123');
+              }}
+              className="px-2 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 text-[12px] font-bold rounded-sm transition-colors cursor-pointer"
+            >
+              User Demo
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );

@@ -1,16 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
-import { PoolClient } from 'pg';
 import { generateToken, verifyToken, requireAuth, requireAdmin, AuthenticatedRequest } from '../auth';
-
-// Admin phone numbers that bypass lock checks
-const ADMIN_PHONE_NUMBERS = ['0999999999', '0383165313', '0968686868', '0912345678'];
-
-function isAdminPhone(phone: string): boolean {
-  if (phone === 'Admin') return true;
-  return ADMIN_PHONE_NUMBERS.includes(phone);
-}
 
 const router = Router();
 
@@ -28,12 +19,7 @@ router.post('/login', async (req: Request, res: Response) => {
   const loginId = phone.trim();
 
   try {
-    // 1. Tìm user bằng SĐT hoặc email
-    // Admin accounts bypass the status check - they can never be locked out
-    const statusCondition = isAdminPhone(loginId) 
-      ? `(sdt = $1 OR email = $1)` 
-      : `(sdt = $1 OR email = $1) AND COALESCE(status, 'active') = 'active'`;
-    
+    // 1. Tìm user bằng SĐT hoặc email (Không kiểm tra trạng thái khóa theo yêu cầu)
     const userResult = await db.query<{
       id: string;
       sdt: string;
@@ -45,13 +31,13 @@ router.post('/login', async (req: Request, res: Response) => {
     }>(
       `SELECT id, sdt, email, password_hash, display_name, role, status
        FROM public.users
-       WHERE ${statusCondition}
+       WHERE (sdt = $1 OR email = $1)
        LIMIT 1`,
       [loginId],
     );
 
     if (!userResult.rows.length) {
-      return res.status(401).json({ error: 'Số điện thoại không tồn tại hoặc tài khoản đã bị khóa.' });
+      return res.status(401).json({ error: 'Số điện thoại hoặc Email không tồn tại trên hệ thống.' });
     }
 
     const user = userResult.rows[0];
@@ -89,7 +75,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // ── POST /api/auth/register ──────────────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
-  const { displayName, phone, password } = req.body ?? {};
+  const { displayName, phone, password, email } = req.body ?? {};
 
   if (!displayName?.trim()) {
     return res.status(400).json({ error: 'Vui lòng nhập họ tên.' });
@@ -102,7 +88,9 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   const formattedPhone = phone.trim();
-  const generatedEmail = `${formattedPhone}@app.aerorefund.local`;
+  const generatedEmail = email?.trim()
+    ? email.trim()
+    : `${formattedPhone}@app.aerorefund.local`;
 
   try {
     // 1. Kiểm tra SĐT đã tồn tại
@@ -114,12 +102,23 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'Số điện thoại này đã được đăng ký.' });
     }
 
+    // Check email duplicate only if provided
+    if (email?.trim()) {
+      const existingEmail = await db.query(
+        `SELECT id FROM public.users WHERE email = $1 LIMIT 1`,
+        [email.trim()],
+      );
+      if (existingEmail.rows.length > 0) {
+        return res.status(409).json({ error: 'Email này đã được đăng ký.' });
+      }
+    }
+
     // 2. Hash password
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // 3. Insert user (RLS-safe): set app.current_user_id to the same UUID we insert.
-    let client: PoolClient | null = null;
+    let client: import('pg').PoolClient | null = null;
     let insertResult;
     try {
       client = await db.connect();
@@ -240,14 +239,14 @@ router.post('/verify-token', async (req: Request, res: Response) => {
     return res.json({ valid: false });
   }
 
-  // Optionally verify user still exists and is active
+  // Optionally verify user still exists
   const userResult = await db.query(
-    `SELECT id FROM public.users WHERE id = $1 AND COALESCE(status, 'active') = 'active'`,
+    `SELECT id FROM public.users WHERE id = $1`,
     [payload.sub],
   );
 
   if (!userResult.rows.length) {
-    return res.json({ valid: false, error: 'Tài khoản không còn hoạt động.' });
+    return res.json({ valid: false, error: 'Tài khoản không tồn tại trên hệ thống.' });
   }
 
   return res.json({

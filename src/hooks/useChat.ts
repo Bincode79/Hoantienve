@@ -7,7 +7,7 @@ import {
   doc, 
   serverTimestamp, 
   writeBatch 
-} from '../mockFirebase';
+} from '../api/apiClient';
 import { ChatMessage, UserProfile } from '../types';
 
 export function useChat(user: UserProfile | null) {

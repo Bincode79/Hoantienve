@@ -22,7 +22,7 @@ import {
   where,
   serverTimestamp,
   FirebaseUser
-} from '../../mockFirebase';
+} from '../../api/apiClient';
 
 import { isAdminPhone } from '../../constants/admin';
 
@@ -114,9 +114,14 @@ export const useAuth = () => {
 
     try {
       const result = await signInWithEmailAndPassword(auth, loginIdentifier, pass) as any;
+      console.log('[useAuth] Login result:', JSON.stringify(result, null, 2));
 
-      if (!result?.user) {
-        throw new Error('Authentication failed: No user returned');
+      if (!result) {
+        throw new Error('Không nhận được phản hồi từ máy chủ.');
+      }
+      if (!result.user) {
+        console.error('[useAuth] Login response missing user:', result);
+        throw new Error('Không nhận được thông tin người dùng. Vui lòng thử đăng nhập lại.');
       }
 
       const profileRef = doc(db, 'users', result.user.uid);
@@ -186,24 +191,13 @@ export const useAuth = () => {
     }
 
     const formattedPhone = formatPhone(phone);
-    const isAdmin = isAdminPhone(formattedPhone);
 
     try {
-      const result = await createUserWithEmailAndPassword(auth, formattedPhone, pass, displayName.trim()) as any;
+      const result = await createUserWithEmailAndPassword(auth, formattedPhone, pass, displayName.trim(), email.trim()) as any;
       if (!result?.user) throw new Error('Registration failed');
 
-      await updateProfile(result.user, { displayName: displayName.trim() });
-
-      const profileRef = doc(db, 'users', result.user.uid);
-      await setDoc(profileRef, {
-        uid: result.user.uid,
-        sdt: formattedPhone,
-        displayName: displayName.trim(),
-        email: email.trim(),
-        role: isAdmin ? 'admin' : 'user',
-        status: 'active',
-        createdAt: serverTimestamp(),
-      });
+      // Backend đã tạo user đầy đủ trong PostgreSQL (displayName, email, role)
+      // Không cần gọi thêm PATCH /users hoặc ghi Firestore
 
       setLoginSuccess('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
       setTimeout(() => setLoginSuccess(null), 5000);

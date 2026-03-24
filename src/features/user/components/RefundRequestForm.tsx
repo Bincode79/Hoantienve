@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
-import { db, addDoc, collection, serverTimestamp } from '../../../mockFirebase';
+import { db, addDoc, collection, serverTimestamp } from '../../../api/apiClient';
 import { UserProfile } from '../../../types';
 import { Button } from '../../../components/Button';
 import { VIETNAMESE_BANKS } from '../../../constants';

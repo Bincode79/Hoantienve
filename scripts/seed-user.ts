@@ -12,12 +12,12 @@ const pool = new Pool({
 async function seedUserAccounts() {
   console.log('🔄 Đang tạo tài khoản user...');
   
-  // Bcrypt hash cho 'User@123' với cost 12
-  const passwordHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4bKHJyOs/ztKPF3.';
-  
+  // Bcrypt hash for 'User@123' (cost 12)
+  const passwordHash = '$2b$12$WHxEmpdB2mpqr4fxQ3IuDuEGHUVdq28hlIplMWIICGw6DHsgKIeZa';
+
   const userAccounts = [
-    { sdt: '0912345678', email: 'user1@app.aerorefund.local', display_name: 'Phạm Thị Mai' },
-    { sdt: '0933888999', email: 'user2@app.aerorefund.local', display_name: 'Hoàng Đức Anh' },
+    { sdt: '0901001001', email: 'user1@app.aerorefund.local', display_name: 'Phạm Thị Mai' },
+    { sdt: '0902002002', email: 'user2@app.aerorefund.local', display_name: 'Hoàng Đức Anh' },
   ];
   
   try {

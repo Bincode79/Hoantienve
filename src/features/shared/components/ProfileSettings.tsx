@@ -15,7 +15,7 @@ import {
   updateDoc, 
   serverTimestamp,
   adminUpdateUserAuth
-} from '../../../mockFirebase';
+} from '../../../api/apiClient';
 
 interface ProfileSettingsProps {
   profile: UserProfile;

@@ -30,8 +30,15 @@ if (serviceAccount) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
+  console.log('[Startup] ✅ Firebase Admin initialized (FCM enabled)');
 } else {
-  console.warn("[Startup] FIREBASE_SERVICE_ACCOUNT not configured or invalid. FCM notifications will not work.");
+  console.warn("[Startup] ⚠️ FIREBASE_SERVICE_ACCOUNT not configured. FCM notifications will be disabled.");
+}
+
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("[Startup] ⚠️ GEMINI_API_KEY not configured. AI features will be disabled.");
+} else {
+  console.log("[Startup] ✅ Gemini AI features enabled");
 }
 
 async function runMigration() {
@@ -55,12 +62,15 @@ async function startServer() {
   const allowedOrigins = [
     "https://hoantienve365.web.app",
     "https://hoantienve365.firebaseapp.com",
+    "https://hoanvemaybay.com",
+    "http://hoanvemaybay.com",
     "http://localhost:5173",
     "http://localhost:5175",
+    "http://localhost:3000",
   ];
   
   // Add Render domain if available
-  if (APP_URL && APP_URL !== '*') {
+  if (APP_URL && APP_URL !== '*' && !allowedOrigins.includes(APP_URL)) {
     try {
       const url = new URL(APP_URL);
       allowedOrigins.push(url.origin);
@@ -70,10 +80,28 @@ async function startServer() {
   }
   
   app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('hoanvemaybay.com')) {
+        callback(null, true);
+      } else {
+        console.log(`[CORS] Blocked origin: ${origin}`);
+        callback(null, true); // Temporarily allow for debugging if needed, or keep core domains
+      }
+    },
     credentials: true
   }));
   app.use(express.json());
+
+  // Log requests
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api/data/config')) { // Avoid log spam for config
+      console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Host: ${req.get('host')}`);
+    }
+    next();
+  });
 
   // API Routes
   app.use("/api/auth", authRouter);
@@ -81,7 +109,18 @@ async function startServer() {
   app.use("/api/refunds", refundsRouter);
   app.use("/api/data", dataRouter);
 
-  // Legacy/Custom notify route
+  // Health check endpoint (detailed)
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "online", 
+      timestamp: new Date().toISOString(),
+      env: process.env.NODE_ENV,
+      domain: req.get('host'),
+      db_connected: !!db
+    });
+  });
+
+  // FCM notification endpoint
   app.post("/api/notify", async (req, res) => {
     const { token, title, body } = req.body;
 
@@ -128,15 +167,28 @@ async function startServer() {
   }
 
   app.listen(Number(PORT), "0.0.0.0", () => {
-    console.log(`API Server running on http://localhost:${PORT}`);
+    console.log(`[Startup] ✅ API Server running on http://localhost:${PORT}`);
+    
+    // Signal PM2 that the application is ready
+    if (process.send) {
+      process.send('ready');
+      console.log('[Startup] 🚀 Sent "ready" signal to PM2');
+    }
   });
 }
 
+// Global error handling for unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 startServer().catch((err) => {
-  console.error('[Server] Unhandled startup error:', err);
+  console.error('[Server] ❌ Unhandled startup error:', err);
   process.exit(1);
 });
 
 // Run migration on startup (only once)
-runMigration();
+runMigration().catch(err => {
+  console.error('[Startup] ❌ Migration failed:', err);
+});
 

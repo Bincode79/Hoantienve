@@ -1,0 +1,113 @@
+---
+description: Không sử dụng tính năng tự động khóa tài khoản người dùng
+alwaysApply: true
+---
+
+# Quy tắc: Khóa Tài Khoản Thủ Công
+
+## Nguyên Tắc
+
+### Không tự động khóa tài khoản
+
+Hệ thống **KHÔNG BAO GIỜ** tự động khóa tài khoản người dùng vì bất kỳ lý do nào sau đây:
+
+- ❌ Số lần đăng nhập sai
+- ❌ Không hoạt động trong thời gian dài
+- ❌ Thay đổi mật khẩu thất bại nhiều lần
+- ❌ Nghi ngờ hoạt động bất thường
+
+## Cách Xử Lý Đúng
+
+### 1. Khi người dùng đăng nhập sai mật khẩu
+
+```typescript
+// ❌ KHÔNG LÀM - Tự động khóa sau N lần sai
+if (failedAttempts >= MAX_ATTEMPTS) {
+  await lockAccount(userId);
+}
+
+// ✅ LÀM - Cho phép thử không giới hạn, chỉ ghi log
+const { data: authUser, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
+
+if (error) {
+  logger.warn('Login failed', { email, attemptCount });
+  throw new AuthError('Email hoặc mật khẩu không đúng');
+}
+```
+
+### 2. Khi cần bảo vệ tài khoản
+
+```typescript
+// ❌ KHÔNG LÀM
+const lockUntil = Date.now() + LOCK_DURATION;
+await updateUser(userId, { locked: true, lockedUntil: lockUntil });
+
+// ✅ LÀM - Chỉ admin mới có quyền khóa tài khoản thủ công
+const { data: adminUser } = await getCurrentUser();
+if (adminUser.role !== 'admin') {
+  throw new PermissionError('Chỉ admin mới có quyền khóa tài khoản');
+}
+
+await updateUser(targetUserId, { status: 'inactive' });
+```
+
+### 3. Khi tài khoản bị tấn công brute force
+
+```typescript
+// ❌ KHÔNG LÀM - Tự động khóa IP/user
+if (ipFailedAttempts > 10) {
+  await blockIP(ipAddress);
+}
+
+// ✅ LÀM - Ghi log cảnh báo, không chặn
+logger.error('Suspicious login attempts', {
+  ip: request.ip,
+  email: request.email,
+  attempts: ipFailedAttempts,
+  timestamp: new Date().toISOString(),
+});
+
+// Gửi email thông báo cho admin nếu cần
+await sendAdminAlert({
+  type: 'SUSPICIOUS_ACTIVITY',
+  details: { email, ip: request.ip, attempts: ipFailedAttempts },
+});
+```
+
+## Danh Sách Kiểm Tra
+
+Trước khi commit code liên quan đến authentication/authorization, đảm bảo:
+
+- [ ] Không có function tự động khóa tài khoản
+- [ ] Không có cron job tự động khóa tài khoản inactive
+- [ ] Không có API endpoint tự động khóa sau N lần thử
+- [ ] Không có client-side logic tự động khóa tài khoản
+- [ ] Chỉ có chức năng khóa **thủ công** bởi admin trong UserManagement
+
+## Ví Dụ Đúng Trong UserManagement
+
+```typescript
+// ✅ ĐÚNG - Admin khóa thủ công
+const handleLockUser = async (userId: string, adminId: string) => {
+  const { data: admin } = await getAdmin(adminId);
+  if (admin?.role !== 'admin') throw new PermissionError();
+
+  await updateUserStatus(userId, 'inactive');
+  toast.success('Đã khóa tài khoản thành công');
+};
+
+// ❌ SAI - Không tự động khóa
+const checkAndLockAccount = async (userId: string) => {
+  const failedAttempts = await getFailedAttempts(userId);
+  if (failedAttempts >= 5) {
+    await updateUserStatus(userId, 'inactive'); // KHÔNG LÀM
+  }
+};
+```
+
+## Ngoại Lệ Duy Nhất
+
+Khóa tự động chỉ được phép khi có yêu cầu rõ ràng từ người dùng hoặc quy định pháp luật. Mọi trường hợp phải được ghi log chi tiết.

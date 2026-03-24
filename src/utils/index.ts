@@ -49,8 +49,8 @@ export const formatPhone = (phone: string) => {
 };
 
 export const getMockEmail = (phone: string) => {
-  if (phone === 'Admin') return 'admin@aerorefund.com';
-  return `phone_${phone}@aerorefund.com`;
+  if (phone === 'Admin') return 'admin@hoanvemaybay.com';
+  return `phone_${phone}@hoanvemaybay.com`;
 };
 
 export const capitalizeName = (name?: string) => {

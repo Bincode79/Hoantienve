@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { X, UserPlus, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../../components/Button';
 import { UserProfile } from '../../../types';
-import { db, doc, setDoc, collection, addDoc, serverTimestamp } from '../../../mockFirebase';
+import { db, collection, addDoc, serverTimestamp } from '../../../api/apiClient';
 
 interface CreateUserModalProps {
   onClose: () => void;
@@ -35,31 +35,27 @@ export function CreateUserModal({ onClose, adminProfile }: CreateUserModalProps)
     setError(null);
     setSuccess(false);
     try {
-      // Use a valid UUID to match the Postgres UUID type
-      const uid = crypto.randomUUID();
       const email = formData.email.trim();
+      const password = formData.password;
 
-      const userData: UserProfile = {
-        uid,
+      // Gọi POST /api/users — backend sẽ tự tạo UUID và hash password
+      const result = await addDoc(collection(db, 'users'), {
         displayName: formData.displayName.trim(),
-        sdt: formData.sdt.replace(/\D/g, ''),
-        email,
+        phone: formData.sdt.replace(/\D/g, ''),
+        password: password,
+        email: email,
         role: 'user',
         status: 'active',
-        createdAt: serverTimestamp(),
-      };
+      });
 
-      await setDoc(doc(db, 'users', uid), userData);
-
-      // We skip localstorage mock as we are now fully on Supabase.
-      // Note: Admin cannot create Auth users directly from frontend without Service Role Key.
-      // For now, this only creates the User Profile. The actual password won't be set in Supabase Auth.
+      // Lấy user ID từ response của backend (hoặc tạo mới)
+      const createdUserId = result?.id || crypto.randomUUID();
 
       await addDoc(collection(db, 'adminAuditLog'), {
         adminId: adminProfile.uid,
         adminEmail: adminProfile.email,
         action: 'create_user',
-        targetId: uid,
+        targetId: createdUserId,
         targetType: 'user',
         changes: {
           displayName: { old: '', new: formData.displayName.trim() },

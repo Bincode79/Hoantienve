@@ -8,19 +8,24 @@
 /** Phone numbers that are automatically assigned the 'admin' role */
 export const ADMIN_PHONE_NUMBERS = [
   '0999999999',
-  '0383165313', 
+  '0383165313',
   '0968686868',
-  '0912345678', // Admin 4
+  '0912345678',
+  '0977777777',
+  '0988888888',
 ] as const;
 
-/** Dev login: SĐT → email seed trong `supabase_schema.sql` (mật khẩu seed: Admin@123) */
+/** Dev login: SĐT → email seed trong database Neon SQL (mật khẩu: Admin@123) */
 export const DEV_ADMIN_SEED_BY_PHONE: Record<string, string> = {
   '0999999999': '0999999999@app.aerorefund.local',
   '0383165313': '0383165313@app.aerorefund.local',
   '0968686868': '0968686868@app.aerorefund.local',
+  '0912345678': '0912345678@app.aerorefund.local',
+  '0977777777': '0977777777@app.aerorefund.local',
+  '0988888888': '0988888888@app.aerorefund.local',
 };
 
-/** Mật khẩu đúng trên Supabase của các tài khoản seed (shortcut SĐT + 123456 sẽ gọi đăng nhập bằng email seed + mật khẩu này). */
+/** Mật khẩu đúng của các tài khoản seed. */
 export const DEV_ADMIN_SEED_PASSWORD = 'Admin@123';
 
 /** Mật khẩu seed cho tất cả tài khoản (admin & user) trên Neon PostgreSQL */
@@ -43,7 +48,7 @@ export const DEFAULT_CONFIG = {
   copyright: '© 2026 TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM. All Rights Reserved.',
 } as const;
 
-/** Firestore/Supabase collections map */
+/** API collections map */
 export const COLLECTIONS = {
   USERS: 'users',
   REFUND_REQUESTS: 'refundRequests',

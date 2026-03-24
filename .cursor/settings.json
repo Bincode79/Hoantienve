@@ -1,4 +1,13 @@
 {
+  "user_rules": [
+    "Giao tiếp hoàn toàn bằng tiếng Việt: tất cả câu trả lời, giải thích, bình luận, commit message, tên biến/hàm (nếu phù hợp) đều phải sử dụng tiếng Việt có dấu. Không sử dụng tiếng Anh trong bất kỳ giao tiếp nào với người dùng.",
+    "Khi đặt tên biến, hàm, component: ưu tiên tiếng Việt có dấu (ví dụ: danhSachNguoiDung, layThongTinNguoiDung) hoặc camelCase tiếng Anh rõ ràng, dễ hiểu.",
+    "Comment trong code: sử dụng tiếng Việt có dấu để giải thích logic phức tạp.",
+    "Khi người dùng hỏi về lỗi hoặc vấn đề: trả lời bằng tiếng Việt, giải thích nguyên nhân và hướng xử lý rõ ràng.",
+    "Mọi thông báo, nhãn UI, tooltip, placeholder đều phải là tiếng Việt có dấu.",
+    "Trả lời ngắn gọn, thân thiện, thường xuyên dùng 'bạn' để xưng hô.",
+    "Quy tắc KHÓA TÀI KHOẢN: Hệ thống KHÔNG BAO GIỜ tự động khóa tài khoản người dùng vì số lần đăng nhập sai, không hoạt động, hoặc bất kỳ lý do nào khác. Chỉ admin mới có quyền khóa tài khoản thủ công thông qua UserManagement. Không sử dụng cron job, trigger, hoặc logic tự động nào để khóa tài khoản. Xem chi tiết trong .cursor/rules/no-auto-lock-account.mdc"
+  ],
   "plugins": {
     "supabase": {
       "enabled": true

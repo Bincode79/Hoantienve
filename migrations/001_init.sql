@@ -175,31 +175,47 @@ CREATE TABLE public.popular_routes (
 
 -- ============================================================
 -- SEED: TEST ACCOUNTS
--- Password: Admin@123
+-- Default password for ALL accounts (admin & user): Admin@123
+-- Default password for user accounts: User@123
 -- ============================================================
 DO $$
 DECLARE
-  admin_pass TEXT := '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4bKHJyOs/ztKPF3.';
+  admin_pass TEXT := '$2b$12$1HHbEdTN4GBES95ezdtKi.FCQKVuf1k5eV3xVw6eFTjiVomYD0vOO';
+  user_pass  TEXT := '$2b$12$WHxEmpdB2mpqr4fxQ3IuDuEGHUVdq28hlIplMWIICGw6DHsgKIeZa';
 BEGIN
+  -- Admin accounts (5)
   INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
   VALUES ('0999999999', '0999999999@app.aerorefund.local', admin_pass, 'Nguyễn Văn Minh', 'admin', 'active')
-  ON CONFLICT (id) DO UPDATE SET password_hash = admin_pass, display_name = 'Nguyễn Văn Minh', role = 'admin';
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Nguyễn Văn Minh', role = 'admin', status = 'active';
 
   INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
   VALUES ('0383165313', '0383165313@app.aerorefund.local', admin_pass, 'Trần Thị Lan', 'admin', 'active')
-  ON CONFLICT (id) DO UPDATE SET password_hash = admin_pass, display_name = 'Trần Thị Lan', role = 'admin';
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Trần Thị Lan', role = 'admin', status = 'active';
 
   INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
   VALUES ('0968686868', '0968686868@app.aerorefund.local', admin_pass, 'Lê Hoàng Nam', 'admin', 'active')
-  ON CONFLICT (id) DO UPDATE SET password_hash = admin_pass, display_name = 'Lê Hoàng Nam', role = 'admin';
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Lê Hoàng Nam', role = 'admin', status = 'active';
 
   INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
-  VALUES ('0912345678', '0912345678@app.aerorefund.local', admin_pass, 'Phạm Thị Mai', 'user', 'active')
-  ON CONFLICT (id) DO UPDATE SET password_hash = admin_pass, display_name = 'Phạm Thị Mai';
+  VALUES ('0912345678', '0912345678@app.aerorefund.local', admin_pass, 'Phạm Văn Đức', 'admin', 'active')
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Phạm Văn Đức', role = 'admin', status = 'active';
 
   INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
-  VALUES ('0933888999', '0933888999@app.aerorefund.local', admin_pass, 'Hoàng Đức Anh', 'user', 'active')
-  ON CONFLICT (id) DO UPDATE SET password_hash = admin_pass, display_name = 'Hoàng Đức Anh';
+  VALUES ('0977777777', '0977777777@app.aerorefund.local', admin_pass, 'Ngô Thị Hương', 'admin', 'active')
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Ngô Thị Hương', role = 'admin', status = 'active';
+
+  INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
+  VALUES ('0988888888', '0988888888@app.aerorefund.local', admin_pass, 'Đặng Minh Tuấn', 'admin', 'active')
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = admin_pass, display_name = 'Đặng Minh Tuấn', role = 'admin', status = 'active';
+
+  -- User accounts (2)
+  INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
+  VALUES ('0901001001', '0901001001@app.aerorefund.local', user_pass, 'Phạm Thị Mai', 'user', 'active')
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = user_pass, display_name = 'Phạm Thị Mai', role = 'user', status = 'active';
+
+  INSERT INTO public.users (sdt, email, password_hash, display_name, role, status)
+  VALUES ('0902002002', '0902002002@app.aerorefund.local', user_pass, 'Hoàng Đức Anh', 'user', 'active')
+  ON CONFLICT (sdt) DO UPDATE SET password_hash = user_pass, display_name = 'Hoàng Đức Anh', role = 'user', status = 'active';
 END $$;
 
 -- ============================================================

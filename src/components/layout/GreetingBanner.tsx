@@ -1,12 +1,12 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { NotificationBell } from '../NotificationBell';
+import { NotificationBell, AppNotification } from '../NotificationBell';
 
 interface GreetingBannerProps {
   currentTime: Date;
   displayName: string;
   isAdmin: boolean;
-  notificationCount: number;
+  notifications: AppNotification[];
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
@@ -15,7 +15,7 @@ export const GreetingBanner: React.FC<GreetingBannerProps> = ({
   currentTime,
   displayName,
   isAdmin,
-  notificationCount,
+  notifications,
   isDarkMode,
   toggleDarkMode
 }) => {
@@ -30,7 +30,7 @@ export const GreetingBanner: React.FC<GreetingBannerProps> = ({
           <span className="text-red-500 font-bold">Xin chào, {displayName}</span>
         </div>
         <div className="flex items-center gap-4">
-           <NotificationBell unreadCount={notificationCount} onClick={() => { }} />
+           <NotificationBell notifications={notifications} />
            <button onClick={toggleDarkMode} className="text-gray-500 hover:text-orange-500 transition-colors bg-gray-100 p-1.5 rounded-full">
              {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
            </button>

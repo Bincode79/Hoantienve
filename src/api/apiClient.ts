@@ -1,29 +1,22 @@
-// File: src/mockFirebase.ts
-// Provides a Firebase-like API backed by the Express server API.
-// Replaces Supabase direct calls.
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+// File: src/api/apiClient.ts
+// Provides a unified API client backed by the Express server API.
+// Replaces both Firebase and Supabase remnants.
 
 export const db = {};
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
-const TOKEN_KEY = 'aerorefund-auth-token';
-// Use empty string for same-origin (Vite dev server proxies to Express)
-// Set VITE_API_URL only for production/CORS scenarios
+const TOKEN_KEY = 'hoanvemaybay-auth-token';
 const API_BASE = (import.meta.env.VITE_API_URL as string) || '';
-
-// Debug: log API_BASE on load
-console.log('[mockFirebase] API_BASE:', API_BASE);
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  const token = localStorage.getItem(TOKEN_KEY);
-  // Debug: log first 20 chars of token if exists
-  if (token) {
-    console.log('[mockFirebase] Token found:', token.substring(0, 20) + '...');
-  } else {
-    console.log('[mockFirebase] Token NOT found in localStorage');
-  }
-  return token;
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function apiHeaders(): Record<string, string> {
@@ -34,8 +27,8 @@ function apiHeaders(): Record<string, string> {
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
+  const fullPath = path.startsWith('http') ? path : `${API_BASE}${path}`;
   try {
-    const fullPath = path.startsWith('http') ? path : `${API_BASE}${path}`;
     const res = await fetch(fullPath, {
       ...options,
       headers: {
@@ -46,7 +39,6 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
     
     if (res.status === 204) return { success: true };
     
-    // Attempt to parse JSON instead of failing hard.
     let data;
     try {
       data = await res.json();
@@ -55,16 +47,21 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
     }
 
     if (!res.ok) {
+      console.error(`[API Error] ${options.method || 'GET'} ${fullPath} - Status: ${res.status}`, data);
       throw new Error(data?.error || `API Error: ${res.status}`);
     }
     return data;
   } catch (err) {
-    console.error(`[apiFetch] ${options.method || 'GET'} ${path} error:`, err);
+    if (err instanceof Error) {
+      console.error(`[Network Error] ${options.method || 'GET'} ${fullPath}:`, err.message);
+    } else {
+      console.error(`[Unknown Error] ${options.method || 'GET'} ${fullPath}:`, err);
+    }
     throw err;
   }
 }
 
-// Sync auth.currentUser from localStorage
+// Global auth state
 let _authUser: any = null;
 
 function loadAuthUser() {
@@ -89,9 +86,8 @@ export const auth = {
 };
 
 export const signInWithEmailAndPassword = async (_auth: any, emailOrPhone: string, pass: string) => {
-  // Determine if it's a mock email or direct phone
   let loginId = emailOrPhone.trim();
-  if (emailOrPhone.startsWith('phone_') && emailOrPhone.endsWith('@aerorefund.com')) {
+  if (emailOrPhone.startsWith('phone_') && emailOrPhone.endsWith('@hoanvemaybay.com')) {
     loginId = emailOrPhone.split('_')[1].split('@')[0];
   } else if (emailOrPhone.includes('@app.aerorefund.local')) {
     loginId = emailOrPhone.split('@')[0];
@@ -112,6 +108,10 @@ export const signInWithEmailAndPassword = async (_auth: any, emailOrPhone: strin
     window.dispatchEvent(new Event('aerorefund-auth-change'));
   }
 
+  if (!result.user) {
+    throw new Error('Server returned no user data');
+  }
+
   return { user: result.user };
 };
 
@@ -122,7 +122,6 @@ export const onAuthStateChanged = (_auth: any, callback: (user: any) => void) =>
   };
   window.addEventListener('storage', handleStorage);
   window.addEventListener('aerorefund-auth-change', handleStorage);
-  // Initial callback
   callback(_authUser);
   return () => {
     window.removeEventListener('storage', handleStorage);
@@ -135,7 +134,6 @@ export const signOut = async (_auth: any) => {
   localStorage.removeItem('auth_user');
   _authUser = null;
   window.dispatchEvent(new Event('aerorefund-auth-change'));
-  // Force reload to clear state
   if (typeof window !== 'undefined') window.location.reload();
 };
 
@@ -144,6 +142,7 @@ export const createUserWithEmailAndPassword = async (
   phone: string,
   pass: string,
   displayName = 'New User',
+  email?: string,
 ) => {
   const result = await apiFetch('/api/auth/register', {
     method: 'POST',
@@ -151,6 +150,7 @@ export const createUserWithEmailAndPassword = async (
       displayName,
       phone,
       password: pass,
+      email: email || '',
     }),
   });
 
@@ -173,7 +173,6 @@ export const updateProfile = async (user: any, profileUpdates: any) => {
     body: JSON.stringify({ displayName: profileUpdates.displayName }),
   });
 
-  // Update local storage if current user
   if (_authUser && _authUser.uid === uid) {
     const updated = { ..._authUser, displayName: profileUpdates.displayName };
     localStorage.setItem('auth_user', JSON.stringify(updated));
@@ -201,7 +200,7 @@ export const adminCreateUser = async (payload: any) => {
   });
 };
 
-// ─── Firestore-like helpers ───────────────────────────────────────────────────
+// ─── Data helpers ──────────────────────────────────────────────────────────
 
 export const serverTimestamp = () => new Date().toISOString();
 export const Timestamp = {
@@ -209,7 +208,6 @@ export const Timestamp = {
   now: () => new Date().toISOString(),
 };
 
-// Convert camelCase → snake_case (e.g. userId → user_id)
 const toSnake = (str: string) => str.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`);
 
 const toSnakeCase = (obj: any, table?: string) => {
@@ -223,7 +221,6 @@ const toSnakeCase = (obj: any, table?: string) => {
   return result;
 };
 
-// Convert snake_case → camelCase
 const fromSnakeCase = (obj: any) => {
   if (!obj || typeof obj !== 'object') return obj;
   const result: any = {};
@@ -231,7 +228,6 @@ const fromSnakeCase = (obj: any) => {
     const camelKey = key.replace(/(_\w)/g, m => m[1].toUpperCase());
     let value = obj[key];
 
-    // Convert ISO date strings to Firebase Timestamp-like objects
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
       const date = new Date(value);
       value = Object.assign(new String(value), {
@@ -249,7 +245,6 @@ const fromSnakeCase = (obj: any) => {
   return result;
 };
 
-// Normalize table name
 const resolveTable = (path: string, ...segments: string[]) => {
   const full = [path, ...segments].join('_').replace(/^_/, '');
 
@@ -264,9 +259,6 @@ const resolveTable = (path: string, ...segments: string[]) => {
     if (parts.length >= 3 && parts[parts.length - 1] === 'messages') {
       const chatId = parts[1];
       return `data/chats/${chatId}/messages`;
-    }
-    if (parts.length >= 2 && parts[1] !== 'messages') {
-      return 'data/chats';
     }
   }
 
@@ -285,13 +277,6 @@ export const doc = (_db: any, path: string, ...segments: string[]) => {
 };
 
 export const collection = (_db: any, path: string, ...segments: string[]) => {
-  if (path === 'chats' && segments.length >= 2) {
-    const chatId = segments[0];
-    const sub = segments[1];
-    if (sub === 'messages') {
-      return { table: `data/chats/${chatId}/messages`, chatId };
-    }
-  }
   const table = resolveTable(path, ...segments);
   return { table };
 };
@@ -314,13 +299,8 @@ export const getDoc = async (docRef: any) => {
       id: docRef.id,
     };
   } catch (err: any) {
-    // Return exists: false for 404 errors instead of throwing
-    if (err?.message?.includes('404') || err?.message?.includes('Không tìm thấy')) {
-      return {
-        exists: () => false,
-        data: () => null,
-        id: docRef.id,
-      };
+    if (err?.message?.includes('404')) {
+      return { exists: () => false, data: () => null, id: docRef.id };
     }
     throw err;
   }
@@ -329,46 +309,28 @@ export const getDoc = async (docRef: any) => {
 export const setDoc = async (docRef: any, data: any, _options?: any) => {
   const snakeData = toSnakeCase(data, docRef.table);
   if (docRef.table === 'data/config') {
-    await apiFetch('/api/data/config', {
-      method: 'PATCH',
-      body: JSON.stringify(snakeData),
-    });
+    await apiFetch('/api/data/config', { method: 'PATCH', body: JSON.stringify(snakeData) });
     return;
   }
   if (docRef.id && docRef.id.length > 20) {
-    await apiFetch(`/api/${docRef.table}/${docRef.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(snakeData),
-    });
+    await apiFetch(`/api/${docRef.table}/${docRef.id}`, { method: 'PATCH', body: JSON.stringify(snakeData) });
   } else {
-    await apiFetch(`/api/${docRef.table}`, {
-      method: 'POST',
-      body: JSON.stringify(snakeData),
-    });
+    await apiFetch(`/api/${docRef.table}`, { method: 'POST', body: JSON.stringify(snakeData) });
   }
 };
 
 export const updateDoc = async (docRef: any, data: any) => {
   const snakeData = toSnakeCase(data, docRef.table);
   if (docRef.table === 'data/config') {
-    await apiFetch('/api/data/config', {
-      method: 'PATCH',
-      body: JSON.stringify(snakeData),
-    });
+    await apiFetch('/api/data/config', { method: 'PATCH', body: JSON.stringify(snakeData) });
     return;
   }
-  await apiFetch(`/api/${docRef.table}/${docRef.id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(snakeData),
-  });
+  await apiFetch(`/api/${docRef.table}/${docRef.id}`, { method: 'PATCH', body: JSON.stringify(snakeData) });
 };
 
 export const addDoc = async (colRef: any, data: any) => {
   const snakeData = toSnakeCase(data, colRef.table);
-  const result = await apiFetch(`/api/${colRef.table}`, {
-    method: 'POST',
-    body: JSON.stringify(snakeData),
-  });
+  const result = await apiFetch(`/api/${colRef.table}`, { method: 'POST', body: JSON.stringify(snakeData) });
   return { id: result.id || result?.data?.id || crypto.randomUUID() };
 };
 
@@ -386,9 +348,6 @@ export const orderBy = (field: string, dir: string) => {
 
 export const query = (colRef: any, ...constraints: any[]) => {
   const finalConstraints = [...constraints];
-  if (colRef.chatId) {
-    finalConstraints.push(where('chatId', '==', colRef.chatId));
-  }
   return { ...colRef, constraints: finalConstraints };
 };
 
@@ -396,22 +355,19 @@ export const getDocs = async (q: any) => {
   let path = `/api/${q.table}`;
   const params = new URLSearchParams();
 
-  if (q.chatId) {
-    params.append('chatId', q.chatId);
-  }
-
   if (q.constraints) {
     for (const c of q.constraints) {
       if (c.type === 'where') params.append(c.field, String(c.value));
-      if (c.type === 'orderBy') params.append('_orderBy', c.field);
-      if (c.type === 'orderBy') params.append('_orderDir', c.dir);
+      if (c.type === 'orderBy') {
+        params.append('_orderBy', c.field);
+        params.append('_orderDir', (c as any).dir);
+      }
     }
   }
 
   if (params.size > 0) path += '?' + params.toString();
 
   let data: any[] = [];
-
   try {
     const result = await apiFetch(path);
     if (Array.isArray(result)) {
@@ -425,13 +381,7 @@ export const getDocs = async (q: any) => {
       data = Array.isArray(candidate) ? candidate : (candidate ? [candidate] : []);
     }
   } catch (err: any) {
-    if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
-      console.warn('[getDocs] Not authenticated, returning empty results');
-    } else if (err?.message?.includes('403') || err?.message?.includes('Admin access required')) {
-      console.warn('[getDocs] Admin access required, returning empty results');
-    } else {
-      console.warn('[getDocs] Error:', err?.message);
-    }
+    console.warn('[getDocs] Error:', err?.message);
   }
 
   return {
@@ -449,33 +399,18 @@ export const getDocs = async (q: any) => {
 
 export const onSnapshot = (q: any, callback: any) => {
   let alive = true;
-  let consecutiveFailures = 0;
-  const MAX_FAILURES_BEFORE_STOP = 3;
-
   const pull = async () => {
     if (!alive) return;
     try {
       const r = await getDocs(q);
-      consecutiveFailures = 0;
       callback(r);
-    } catch (err: any) {
-      if (err?.message?.includes('401') || err?.message?.includes('Missing authorization')) {
-        consecutiveFailures++;
-        console.warn(`[onSnapshot] Auth error (${consecutiveFailures}/${MAX_FAILURES_BEFORE_STOP}), waiting...`);
-        if (consecutiveFailures >= MAX_FAILURES_BEFORE_STOP) {
-          console.warn('[onSnapshot] Stopping poll due to auth failures');
-          alive = false;
-          if (typeof window !== 'undefined') window.clearInterval(poll);
-        }
-      } else {
-        consecutiveFailures = 0;
-        callback({ docs: [], empty: true, size: 0 });
-      }
+    } catch (err) {
+      callback({ docs: [], empty: true, size: 0 });
     }
   };
 
   pull();
-  const pollMs = 10_000;
+  const pollMs = 15_000;
   const poll = typeof window !== 'undefined' ? window.setInterval(pull, pollMs) : 0;
   return () => {
     alive = false;

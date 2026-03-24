@@ -39,4 +39,11 @@ export const db = {
       return res;
     });
   },
+
+  connect(): Promise<import('pg').PoolClient> {
+    if (!pool) {
+      return Promise.reject(new Error('Database pool not initialized: DATABASE_URL is missing'));
+    }
+    return pool.connect();
+  },
 };

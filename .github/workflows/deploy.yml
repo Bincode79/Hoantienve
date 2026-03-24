@@ -1,0 +1,387 @@
+# =============================================================================
+# AeroRefund (HoanTienVe365) - GitHub Actions CI/CD Workflow
+# =============================================================================
+# Auto-deploy to VPS on push to main branch
+# =============================================================================
+# Required GitHub Secrets:
+#   VPS_HOST          - VPS server IP (e.g., 187.127.107.99)
+#   VPS_USER          - SSH username (e.g., root)
+#   VPS_SSH_KEY       - Private SSH key for passwordless login
+#   VITE_API_URL      - Production API URL
+#   VITE_SUPABASE_URL - Supabase URL
+#   VITE_SUPABASE_ANON_KEY - Supabase anon key
+# =============================================================================
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (faster deployment)'
+        required: false
+        default: 'false'
+        type: boolean
+      branch:
+        description: 'Branch to deploy'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  DEPLOY_USER: root
+  APP_DIR: /var/www/hoantienve
+  FRONTEND_DIR: /var/www/hoantienve/frontend
+  LOG_DIR: /var/log/hoantienve
+  BACKUP_DIR: /var/backups/hoantienve
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Lint & Type Check
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Build Frontend
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FCM_VAPID_KEY: ${{ secrets.VITE_FCM_VAPID_KEY }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.run_id }}
+          path: dist/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Deploy to VPS
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+    if: github.ref == 'refs/heads/main' || github.event.inputs.branch != ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.run_id }}
+          path: dist/
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          timeout: 300s
+          command: |
+            set -e
+
+            echo "=============================================="
+            echo "   AeroRefund - VPS Deployment"
+            echo "   $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "   Branch: ${{ github.event.inputs.branch || github.ref_name }}"
+            echo "=============================================="
+            echo ""
+
+            # =========================================
+            # Pre-deployment: Create backup
+            # =========================================
+            echo "📦 Creating pre-deployment backup..."
+            BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+            BACKUP_NAME="backup_\${BACKUP_DATE}"
+            mkdir -p ${{ env.BACKUP_DIR }}/\${BACKUP_NAME}
+
+            if [ -d "${{ env.APP_DIR }}/source" ]; then
+              rsync -a --exclude='node_modules' --exclude='.git' --exclude='dist' \
+                ${{ env.APP_DIR }}/source/ ${{ env.BACKUP_DIR }}/\${BACKUP_NAME}/source/
+            fi
+
+            if [ -d "${{ env.APP_DIR }}/frontend" ]; then
+              rsync -a ${{ env.APP_DIR }}/frontend/ ${{ env.BACKUP_DIR }}/\${BACKUP_NAME}/frontend/
+            fi
+
+            if [ -f "${{ env.APP_DIR }}/source/.env" ]; then
+              cp ${{ env.APP_DIR }}/source/.env ${{ env.BACKUP_DIR }}/\${BACKUP_NAME}/.env
+            fi
+
+            cd ${{ env.BACKUP_DIR }}
+            tar -czvf "\${BACKUP_NAME}.tar.gz" "\${BACKUP_NAME}"
+            rm -rf "\${BACKUP_NAME}"
+
+            # Keep only last 5 backups
+            ls -t backup_*.tar.gz 2>/dev/null | tail -n +6 | xargs rm -f 2>/dev/null || true
+
+            echo "✅ Backup created: \${BACKUP_NAME}.tar.gz"
+            echo ""
+
+            # =========================================
+            # Create directories
+            # =========================================
+            echo "📁 Creating directories..."
+            mkdir -p ${{ env.APP_DIR }}/source
+            mkdir -p ${{ env.APP_DIR }}/frontend
+            mkdir -p ${{ env.LOG_DIR }}
+            mkdir -p ${{ env.BACKUP_DIR }}
+            mkdir -p /var/www/acme-challenge
+            echo "✅ Directories ready"
+            echo ""
+
+            # =========================================
+            # Upload source code via rsync
+            # =========================================
+            echo "📤 Uploading source code..."
+            rsync -a --exclude='node_modules' --exclude='.git' --exclude='dist' \
+              --exclude='.cache' --exclude='tmp' --exclude='.vscode' \
+              --exclude='coverage' --exclude='*.log' \
+              -e "ssh -o StrictHostKeyChecking=no" \
+              ./ ${{ env.DEPLOY_USER }}@${{ secrets.VPS_HOST }}:${{ env.APP_DIR }}/source/
+            echo "✅ Source code uploaded"
+            echo ""
+
+            # =========================================
+            # Copy build files to frontend
+            # =========================================
+            echo "📋 Copying build files..."
+            rm -rf ${{ env.APP_DIR }}/frontend/*
+            cp -r dist/* ${{ env.APP_DIR }}/frontend/
+            chmod -R 755 ${{ env.APP_DIR }}/frontend
+            echo "✅ Build files copied"
+            echo ""
+
+            # =========================================
+            # Install dependencies
+            # =========================================
+            echo "📦 Installing dependencies..."
+            cd ${{ env.APP_DIR }}/source
+            npm install --production=false --prefer-offline 2>&1 | tail -5
+            echo "✅ Dependencies installed"
+            echo ""
+
+            # =========================================
+            # Configure PM2 ecosystem
+            # =========================================
+            echo "⚙️ Configuring PM2..."
+            cat > ecosystem.config.js << 'PM2EOF'
+// PM2 ecosystem configuration for AeroRefund (HoanTienVe365)
+module.exports = {
+  apps: [
+    {
+      name: 'hoantienve-api',
+      script: 'node_modules/.bin/tsx',
+      args: 'server.ts',
+      cwd: '${{ env.APP_DIR }}/source',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '750M',
+      node_args: '--max-old-space-size=650',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 3001,
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3001,
+        NODE_OPTIONS: '--max-old-space-size=650',
+      },
+      error_file: '${{ env.LOG_DIR }}/error.log',
+      out_file: '${{ env.LOG_DIR }}/out.log',
+      log_file: '${{ env.LOG_DIR }}/combined.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      kill_timeout: 8000,
+      wait_ready: true,
+      listen_timeout: 15000,
+      shutdown_with_message: true,
+      restart_delay: 4000,
+      max_restarts: 10,
+      min_uptime: '10s',
+    },
+  ],
+};
+PM2EOF
+            chmod 644 ecosystem.config.js
+            echo "✅ PM2 configured"
+            echo ""
+
+            # =========================================
+            # Restart PM2
+            # =========================================
+            echo "🔄 Restarting PM2..."
+            pm2 stop hoantienve-api 2>/dev/null || true
+            pm2 delete hoantienve-api 2>/dev/null || true
+            pm2 start ecosystem.config.js --env production
+            pm2 save
+            echo "✅ PM2 restarted"
+            echo ""
+
+            # =========================================
+            # Reload Nginx
+            # =========================================
+            echo "🔄 Reloading Nginx..."
+            nginx -t && systemctl reload nginx
+            echo "✅ Nginx reloaded"
+            echo ""
+
+            # =========================================
+            # Health check
+            # =========================================
+            echo "🏥 Running health checks..."
+            sleep 5
+            MAX_ATTEMPTS=5
+            ATTEMPT=1
+            while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+              if curl -sf http://localhost:3001/api/data/airports > /dev/null 2>&1; then
+                echo "✅ Health check passed (attempt $ATTEMPT)"
+                break
+              fi
+              if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+                echo "⚠️  API health check timeout - checking PM2 logs..."
+                pm2 logs hoantienve-api --lines 20 --nostream
+              fi
+              echo "⏳ Attempt $ATTEMPT/$MAX_ATTEMPTS failed, retrying..."
+              sleep 3
+              ATTEMPT=$((ATTEMPT + 1))
+            done
+
+            echo ""
+            echo "=============================================="
+            echo "   Deployment Summary"
+            echo "=============================================="
+            pm2 list
+            echo ""
+            echo "🌐 App URL: https://${{ secrets.VITE_API_URL }}"
+            echo "📊 Commit: ${{ github.sha }}"
+            echo "👤 Author: ${{ github.actor }}"
+            echo "=============================================="
+
+      - name: Deployment notification (success)
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "🌐 https://${{ secrets.VITE_API_URL }}"
+          echo "📊 Commit: ${{ github.sha }}"
+
+      - name: Deployment failure notification
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the deploy job logs for details."
+          echo ""
+          echo "To rollback manually:"
+          echo "  ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
+          echo "  cd ${{ env.APP_DIR }}"
+          echo "  # Find latest backup: ls -t /var/backups/hoantienve/backup_*.tar.gz"
+          echo "  # Extract and restore from backup"
+          echo ""
+          echo "To check logs:"
+          echo "  ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'pm2 logs hoantienve-api --lines 50'"
+
+  # ---------------------------------------------------------------------------
+  # Job 4: PM2 Status (verification)
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always() && needs.deploy.result == 'success'
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Verify PM2 status
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 30s
+          command: |
+            echo "📊 PM2 Status:"
+            pm2 list
+            echo ""
+            echo "📝 Recent Logs:"
+            pm2 logs hoantienve-api --lines 5 --nostream
+            echo ""
+            echo "💾 Disk Usage:"
+            df -h /var/www/hoantienve
+            echo ""
+            echo "🔒 Firewall Status:"
+            ufw status | head -10

@@ -26,7 +26,7 @@ import {
   collection,
   addDoc,
   serverTimestamp
-} from '../../../mockFirebase';
+} from '../../../api/apiClient';
 import { CreateUserModal } from './CreateUserModal';
 
 interface UserManagementProps {
@@ -46,10 +46,8 @@ export function UserManagement({
 }: UserManagementProps) {
   const { success: toastSuccess, error: toastError } = useToast();
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [newPasswordForUser, setNewPasswordForUser] = useState('');
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
@@ -64,15 +62,14 @@ export function UserManagement({
         u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
         u.sdt?.includes(userSearch);
       const roleMatch = roleFilter === 'all' || u.role === roleFilter;
-      const statusMatch = statusFilter === 'all' || u.status === statusFilter;
-      return searchMatch && roleMatch && statusMatch;
+      return searchMatch && roleMatch;
     });
-  }, [users, userSearch, roleFilter, statusFilter]);
+  }, [users, userSearch, roleFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * usersPerPage, currentPage * usersPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [userSearch, roleFilter, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [userSearch, roleFilter]);
 
   const writeAuditLog = async (action: AuditLog['action'], targetId: string, targetType: AuditLog['targetType'], changes: Record<string, { old: any; new: any }>) => {
     try {
@@ -95,9 +92,6 @@ export function UserManagement({
       const changes: Record<string, { old: any; new: any }> = {};
       if (data.role !== undefined && data.role !== oldData.role) {
         changes.role = { old: oldData.role, new: data.role };
-      }
-      if (data.status !== undefined && data.status !== oldData.status) {
-        changes.status = { old: oldData.status, new: data.status };
       }
       if (data.displayName !== undefined && data.displayName !== oldData.displayName) {
         changes.displayName = { old: oldData.displayName, new: data.displayName };
@@ -131,18 +125,8 @@ export function UserManagement({
   };
 
   const handleDeleteUser = async (uid: string) => {
-    const targetUser = users.find(u => u.uid === uid);
-    if (!targetUser) return;
-    try {
-      await updateDoc(doc(db, 'users', uid), { status: 'inactive' });
-      await writeAuditLog('delete_user', uid, 'user', {
-        status: { old: targetUser.status, new: 'inactive' }
-      });
-      setUserToDelete(null);
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toastError('Lỗi', 'Khóa người dùng thất bại. Vui lòng thử lại.');
-    }
+    // Account locking feature removed as per project rule
+    toastError('Thông báo', 'Tính năng khóa tài khoản đã bị gỡ bỏ theo quy tắc mới của dự án.');
   };
 
   const userRequests = useMemo(() => {
@@ -186,15 +170,6 @@ export function UserManagement({
               <option value="admin">QUẢN TRỊ</option>
               <option value="user">NGƯỜI DÙNG</option>
             </select>
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as 'active' | 'inactive' | 'all')}
-              className="flex-1 md:flex-none px-2 py-1.5 text-[11px] md:text-[12px] font-bold border border-gray-300 rounded bg-white outline-none focus:border-blue-500 cursor-pointer"
-            >
-              <option value="all">T.THÁI: TẤT CẢ</option>
-              <option value="active">HOẠT ĐỘNG</option>
-              <option value="inactive">ĐÃ KHÓA</option>
-            </select>
           </div>
         </div>
 
@@ -205,7 +180,6 @@ export function UserManagement({
               <tr className="bg-[#f5f5f5] text-[#0A58A3] border-b border-gray-300">
                 <th className="px-3 py-2.5 font-bold uppercase">Người dùng</th>
                 <th className="px-3 py-2.5 font-bold uppercase w-32 text-center">Vai trò</th>
-                <th className="px-3 py-2.5 font-bold uppercase w-32 text-center">Trạng thái</th>
                 <th className="px-3 py-2.5 font-bold uppercase w-36 text-center">Ngày đăng ký</th>
                 <th className="px-3 py-2.5 font-bold uppercase text-center w-56">Hành động</th>
               </tr>
@@ -235,7 +209,6 @@ export function UserManagement({
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.role} /></td>
-                    <td className="px-3 py-2.5 text-center border-r border-gray-100"><Badge status={u.status} /></td>
                     <td className="px-3 py-2.5 text-center text-[12px] text-gray-600 border-r border-gray-100">
                       {formatDate(u.createdAt, 'dd/MM/yyyy')}
                     </td>
@@ -247,14 +220,6 @@ export function UserManagement({
                         <span className="text-gray-300">|</span>
                         <button className="text-orange-600 hover:text-orange-800 text-[11px] font-bold uppercase flex items-center gap-1" onClick={() => { setEditingUser(u); setNewPasswordForUser(''); setEditTab('info'); }}>
                           <UserCog size={12} /> Sửa
-                        </button>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          onClick={() => setUserToDelete(u)}
-                          className="text-red-600 hover:text-red-800 text-[11px] font-bold uppercase flex items-center gap-1"
-                          title="Khóa người dùng"
-                        >
-                          <Trash2 size={12} /> Khóa
                         </button>
                       </div>
                     </td>
@@ -286,7 +251,6 @@ export function UserManagement({
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Badge status={u.role} />
-                    <Badge status={u.status} />
                   </div>
                 </div>
 
@@ -304,12 +268,6 @@ export function UserManagement({
                       onClick={() => { setEditingUser(u); setNewPasswordForUser(''); setEditTab('info'); }}
                     >
                       <UserCog size={12} />
-                    </button>
-                    <button 
-                      className="p-1.5 bg-red-50 text-red-700 rounded border border-red-200" 
-                      onClick={() => setUserToDelete(u)}
-                    >
-                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
@@ -385,7 +343,6 @@ export function UserManagement({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-gray-700 uppercase block">Vai trò</label>
                       <select
                         className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-[13px] outline-none focus:border-blue-500"
                         value={editingUser.role}
@@ -393,17 +350,6 @@ export function UserManagement({
                       >
                         <option value="user">Người dùng</option>
                         <option value="admin">Quản trị</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-gray-700 uppercase block">Trạng thái</label>
-                      <select
-                        className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-[13px] outline-none focus:border-blue-500"
-                        value={editingUser.status}
-                        onChange={e => setEditingUser({ ...editingUser, status: e.target.value as 'active' | 'inactive' })}
-                      >
-                        <option value="active">Hoạt động</option>
-                        <option value="inactive">Tạm khóa</option>
                       </select>
                     </div>
                   </div>
@@ -482,24 +428,6 @@ export function UserManagement({
                >
                  LƯU THAY ĐỔI
                </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {userToDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm bg-white p-5 text-center rounded-md border border-gray-200 shadow-2xl">
-            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-200">
-              <Trash2 size={24} />
-            </div>
-            <h3 className="text-[16px] font-black text-gray-900 mb-2 uppercase">Xác nhận khóa tài khoản?</h3>
-            <p className="text-[13px] text-gray-600 mb-5">
-              Bạn có chắc muốn khóa tài khoản <span className="font-bold text-red-600">{userToDelete.displayName}</span>?
-            </p>
-            <div className="flex gap-2">
-              <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-[13px] py-2 rounded transition-colors" onClick={() => setUserToDelete(null)}>HỦY</button>
-              <button className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] py-2 rounded transition-colors" onClick={() => handleDeleteUser(userToDelete.uid)}>XÁC NHẬN KHÓA</button>
             </div>
           </div>
         </div>

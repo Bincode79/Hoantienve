@@ -8,6 +8,7 @@ import { PlaneTakeoff, PlaneLanding, Calendar, Users, ArrowRightLeft, Search } f
 import { motion } from 'motion/react';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
+import { useToast } from '../../../components/Toast';
 
 export const FlightSearchHero: React.FC = () => {
   const [tripType, setTripType] = useState<'round' | 'oneway'>('round');
@@ -15,6 +16,7 @@ export const FlightSearchHero: React.FC = () => {
   const [destination, setDestination] = useState('Hà Nội (HAN)');
   const [departDate, setDepartDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
+  const { info: toastInfo } = useToast();
 
   const handleSwap = () => {
     const temp = departure;
@@ -174,7 +176,7 @@ export const FlightSearchHero: React.FC = () => {
               <div className="md:col-span-2">
                 <Button 
                   className="w-full h-16 md:rounded-l-none md:rounded-r-xl rounded-xl bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white font-black text-base shadow-lg shadow-orange-500/30 border-0 flex items-center justify-center gap-2 transition-all hover:shadow-orange-500/50"
-                  onClick={() => alert("Tính năng tìm chuyến bay đang được phát triển!")}
+                  onClick={() => toastInfo("Thông báo", "Tính năng tìm chuyến bay đang được phát triển!")}
                 >
                   <Search size={20} strokeWidth={3} />
                   <span>TÌM VÉ</span>

@@ -1,14 +1,17 @@
 // Test hoàn chỉnh API - sử dụng http module
 import http from 'http';
 
-const API_BASE = 'localhost:3001';
+const REMOTE_HOST = process.env.TEST_HOST || 'localhost';
+const REMOTE_PORT = process.env.TEST_PORT || '3001';
+const PROTOCOL = REMOTE_PORT === '443' ? 'https' : 'http';
 
 function httpRequest(path: string, options: any = {}): Promise<{ status: number, data: any }> {
+  const httpModule = PROTOCOL === 'https' ? require('https') : http;
   return new Promise((resolve, reject) => {
     const data = options.body ? JSON.stringify(options.body) : undefined;
-    const req = http.request({
-      hostname: 'localhost',
-      port: 3001,
+    const req = httpModule.request({
+      hostname: REMOTE_HOST,
+      port: REMOTE_PORT,
       path,
       method: options.method || 'GET',
       headers: {
@@ -88,7 +91,7 @@ async function testAPI() {
     }
   });
   
-  let approveRes = { data: {} };
+  let approveRes: any = { data: {} };
   if (refundRes.data.id) {
     console.log('   ✅ Tạo yêu cầu thành công!');
     console.log('   ID: ' + refundRes.data.id);
@@ -102,11 +105,11 @@ async function testAPI() {
       body: { admin_note: 'Đã duyệt qua test API' }
     });
     
-    if (approveRes.data.id) {
+    if (approveRes.data && (approveRes.data as any).id) {
       console.log('   ✅ Duyệt thành công!');
-      console.log('   Status: ' + approveRes.data.status);
+      console.log('   Status: ' + (approveRes.data as any).status);
     } else {
-      console.log('   ⚠️ Lỗi:', approveRes.data.error);
+      console.log('   ⚠️ Lỗi:', (approveRes.data as any).error);
     }
   } else {
     console.log('   ⚠️ Lỗi:', refundRes.data.error);

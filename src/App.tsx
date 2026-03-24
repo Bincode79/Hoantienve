@@ -23,14 +23,16 @@ import { AbayHomePage } from './features/public/AbayHomePage';
 import { AppHeader } from './components/layout/AppHeader';
 import { AppNavbar } from './components/layout/AppNavbar';
 import { GreetingBanner } from './components/layout/GreetingBanner';
+import { AppNotification } from './components/NotificationBell';
 import { AppFooter } from './components/layout/AppFooter';
 
 // Utils & Types
-import { db, collection, query, getDocs } from './mockFirebase';
+import { db, collection, query, getDocs, doc, setDoc, addDoc, deleteDoc, serverTimestamp } from './api/apiClient';
 import { User as UserIcon, Shield, TicketCheck, Ticket, MessageCircle, ShieldCheck, Settings } from 'lucide-react';
 
 export default function App() {
   const { user, profile, loading, isLoading: authIsLoading, loginError, loginSuccess, login, logout: signOut } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const {
     requests,
     allRequests,
@@ -67,9 +69,9 @@ export default function App() {
   const [config, setConfig] = useState<any>({
     brandName: 'TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆV NAM',
     supportPhone: '1900 6091',
-    supportEmail: 'hotro@aerorefund.com',
+    supportEmail: 'hotro@hoanvemaybay.com',
     workingHours: '0h - 24h',
-    copyright: '© 2026 TRUNG TÂM HỖ TRỢ HÀNG KHÔNG VIỆT NAM. All Rights Reserved.'
+    copyright: '© 2026 HOÀN VÉ MÁY BAY. All Rights Reserved.'
   });
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -140,7 +142,6 @@ export default function App() {
       try {
         const q = query(collection(db, type));
         const snapshot = await getDocs(q);
-        const { deleteDoc, doc } = await import('./mockFirebase');
         for (const d of snapshot.docs) {
           await deleteDoc(doc(db, type, d.id));
         }
@@ -192,7 +193,6 @@ export default function App() {
 
   const handleSaveConfig = async (newConfig: any) => {
     try {
-      const { setDoc, doc, collection } = await import('./mockFirebase');
       await setDoc(doc(db, 'config', 'main'), newConfig, { merge: true });
       setConfig(newConfig);
       success('Thành công', 'Đã cập nhật cấu hình hệ thống.');
@@ -204,7 +204,6 @@ export default function App() {
 
   const handleSeedData = async () => {
     const pnrCodes = ['ABCXYZ', 'DEF123', 'VNA456', 'QWERTY', 'JET789'];
-    const { addDoc, collection, serverTimestamp } = await import('./mockFirebase');
     
     try {
       for (const [index, code] of pnrCodes.entries()) {
@@ -248,6 +247,29 @@ export default function App() {
     recentRequests: allRequests.slice(0, 5)
   }), [allRequests, users]);
 
+  const notifications = useMemo<AppNotification[]>(() => {
+    if (isAdmin) {
+      return allRequests
+        .filter(r => r.status === 'pending')
+        .slice(0, 10)
+        .map(r => ({
+          id: r.id || String(Math.random()),
+          title: 'Yêu cầu hoàn tiền mới',
+          message: `Khách hàng ${r.accountHolder || r.userEmail} vừa gửi yêu cầu (PNR: ${r.orderCode})`,
+          isRead: false
+        }));
+    } else {
+      return requests
+        .filter(r => r.status === 'processing')
+        .map(r => ({
+          id: r.id || String(Math.random()),
+          title: 'Đang xử lý hoàn tiền',
+          message: `Yêu cầu cho mã PNR ${r.orderCode} đang được hệ thống xử lý`,
+          isRead: false
+        }));
+    }
+  }, [isAdmin, allRequests, requests]);
+
   if (loading) return <LoadingSpinner />;
 
   if (!user || !profile) {
@@ -270,8 +292,6 @@ export default function App() {
     );
   }
 
-  const isAdmin = profile.role === 'admin';
-
   return (
     <div className="bg-[#f0f2f5] min-h-[100dvh] font-sans text-gray-800 antialiased selection:bg-orange-200">
       
@@ -291,7 +311,7 @@ export default function App() {
         currentTime={currentTime}
         displayName={profile.displayName}
         isAdmin={isAdmin}
-        notificationCount={isAdmin ? adminStats.pendingCount : requests.filter(r => r.status === 'processing').length}
+        notifications={notifications}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
       />
